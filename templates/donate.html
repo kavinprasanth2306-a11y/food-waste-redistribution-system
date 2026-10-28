@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Log Surplus Food Donation{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-2">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+            Donor Portal
+        </div>
+        <h1 class="text-3xl font-heading font-extrabold text-white tracking-tight">Log Surplus Food For Rescue</h1>
+        <p class="text-sm text-slate-400 mt-1">
+            Publish edible surplus from your dining hall, mess, or restaurant. Verified local shelters will receive alerts and claim for timely pickup.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <!-- Donation Form (7 cols) -->
+        <div class="lg:col-span-7 glass-panel rounded-2xl p-6 md:p-8 border border-slate-800 shadow-xl">
+            <form action="{{ url_for('donate') }}" method="POST" id="donationForm" class="space-y-6">
+                
+                <!-- Food Name -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                        Food Item Name <span class="text-rose-400">*</span>
+                    </label>
+                    <input type="text" name="item_name" id="item_name" required
+                           placeholder="e.g., Steamed Rice, Dal Makhani & 50 Rotis"
+                           class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all">
+                </div>
+
+                <!-- Category & Dietary Type (2 cols) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                            Category <span class="text-rose-400">*</span>
+                        </label>
+                        <select name="category" id="category" required
+                                class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all">
+                            <option value="Cooked Meal">🍲 Cooked Meal</option>
+                            <option value="Bakery">🥐 Bakery & Bread</option>
+                            <option value="Packaged Goods">📦 Packaged Goods</option>
+                            <option value="Raw Produce">🥦 Raw Produce</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                            Dietary Preference <span class="text-rose-400">*</span>
+                        </label>
+                        <select name="dietary_type" id="dietary_type" required
+                                class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all">
+                            <option value="Veg">🌱 Pure Vegetarian</option>
+                            <option value="Non-Veg">🍗 Non-Vegetarian</option>
+                            <option value="Vegan">🌿 Vegan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Quantity & Servings with Auto-calculator (2 cols) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                            Total Quantity (kg) <span class="text-rose-400">*</span>
+                        </label>
+                        <div class="relative">
+                            <input type="number" step="0.5" min="0.5" max="500" name="quantity_kg" id="quantity_kg" required
+                                   placeholder="25.0"
+                                   class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all">
+                            <span class="absolute right-4 top-3.5 text-xs text-slate-400 font-mono">kg</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                            Estimated Servings (Meals)
+                        </label>
+                        <div class="relative">
+                            <input type="number" min="1" max="1000" name="servings_estimate" id="servings_estimate"
+                                   placeholder="Auto-calculated (~50)"
+                                   class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all">
+                            <span class="absolute right-4 top-3.5 text-xs text-slate-400 font-mono">meals</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expiry Window & Storage Condition (2 cols) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                            Expiry Window (Hours) <span class="text-rose-400">*</span>
+                        </label>
+                        <div class="relative">
+                            <input type="number" step="0.5" min="0.5" max="48" name="expiry_hours" id="expiry_hours" required
+                                   value="4.0"
+                                   class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all">
+                            <span class="absolute right-4 top-3.5 text-xs text-slate-400 font-mono">hrs</span>
+                        </div>
+                        <div class="flex gap-1.5 mt-2">
+                            <button type="button" onclick="setExpiry(2)" class="px-2 py-1 rounded bg-slate-800 text-[10px] text-slate-300 hover:bg-slate-700 font-mono">2h (Urgent)</button>
+                            <button type="button" onclick="setExpiry(4)" class="px-2 py-1 rounded bg-slate-800 text-[10px] text-slate-300 hover:bg-slate-700 font-mono">4h (Standard)</button>
+                            <button type="button" onclick="setExpiry(8)" class="px-2 py-1 rounded bg-slate-800 text-[10px] text-slate-300 hover:bg-slate-700 font-mono">8h (Chilled)</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                            Storage Condition <span class="text-rose-400">*</span>
+                        </label>
+                        <select name="storage_condition" id="storage_condition" required
+                                class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all">
+                            <option value="Hot Insulated (>60°C)">🔥 Hot Insulated (&gt;60°C)</option>
+                            <option value="Chilled (4°C)">❄️ Chilled (4°C)</option>
+                            <option value="Room Temp / Dry">📦 Room Temp / Dry Storage</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Pickup Address & Contact -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                            Pickup Address & Landmark <span class="text-rose-400">*</span>
+                        </label>
+                        <input type="text" name="pickup_address" id="pickup_address" required
+                               value="{{ current_user.address if current_user and current_user.address else 'Campus Dining Complex, Loading Dock A' }}"
+                               placeholder="e.g. Mess Hall Gate 3, Sector 12"
+                               class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                            Coordinator Phone <span class="text-rose-400">*</span>
+                        </label>
+                        <input type="text" name="pickup_contact" id="pickup_contact" required
+                               value="{{ current_user.phone if current_user and current_user.phone else '+91 98765 43210' }}"
+                               placeholder="+91 98765 43210"
+                               class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all">
+                    </div>
+                </div>
+
+                <!-- Notes / Special Instructions -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                        Packaging, Allergens & Logistics Notes
+                    </label>
+                    <textarea name="notes" id="notes" rows="2"
+                              placeholder="e.g., Packed in 4 food-grade stainless cafs. Please bring your own transfer containers."
+                              class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all"></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 transition-all">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    <span>Publish Donation to Redistribution Feed</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Live Card Preview & Metric Estimation (5 cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            <div class="glass-panel rounded-2xl p-6 border border-slate-800">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <i data-lucide="eye" class="w-4 h-4 text-emerald-400"></i>
+                        Live Recipient Card Preview
+                    </h3>
+                    <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        Interactive
+                    </span>
+                </div>
+
+                <!-- Mock Card -->
+                <div class="glass-card rounded-xl p-5 border border-emerald-500/30 shadow-lg bg-slate-900/80">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">
+                            Available Now
+                        </span>
+                        <span class="text-xs font-mono text-amber-400" id="preview_urgency">
+                            ⏳ 4.0 hrs left
+                        </span>
+                    </div>
+
+                    <h4 class="text-base font-bold text-white mb-2" id="preview_title">
+                        Steamed Rice, Dal Makhani & 50 Rotis
+                    </h4>
+
+                    <div class="flex flex-wrap gap-1.5 mb-3">
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40" id="preview_diet">
+                            🌱 Pure Veg
+                        </span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300" id="preview_cat">
+                            Cooked Meal
+                        </span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-indigo-950/60 text-indigo-300" id="preview_storage">
+                            Hot Insulated (&gt;60°C)
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs mb-3">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block font-mono">Quantity</span>
+                            <span class="font-bold text-white text-sm" id="preview_quantity">25 kg</span>
+                            <span class="text-slate-400 text-[11px]" id="preview_servings"> (~50 meals)</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 block font-mono">CO₂ Prevention</span>
+                            <span class="font-bold text-emerald-400 text-sm" id="preview_co2">62.5 kg</span>
+                            <span class="text-slate-400 text-[11px]"> avoided</span>
+                        </div>
+                    </div>
+
+                    <p class="text-[11px] text-slate-400 italic mb-3" id="preview_notes">
+                        "Packed in clean food-grade containers."
+                    </p>
+
+                    <div class="pt-2 border-t border-slate-800 text-xs text-slate-400 space-y-1">
+                        <div class="font-semibold text-slate-300 truncate" id="preview_org">
+                            {{ current_user.organization if current_user else 'Campus Central Dining' }}
+                        </div>
+                        <div class="text-[11px] text-slate-400 truncate" id="preview_address">
+                            Campus Dining Complex, Loading Dock A
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Environmental Impact Card -->
+            <div class="glass-panel rounded-2xl p-6 border border-slate-800 text-xs text-slate-300 space-y-3">
+                <div class="flex items-center gap-2 text-emerald-400 font-bold">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Academic Quality & Safety Check</span>
+                </div>
+                <p class="text-[11px] text-slate-400">
+                    All donations logged onto the platform are subject to automated expiry countdowns. Items expiring in &lt;2 hours receive high-urgency notifications to local shelters.
+                </p>
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-[11px] space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">CO₂ Index:</span>
+                        <span class="font-mono text-emerald-400">1 kg Food = 2.5 kg CO₂e</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Water Index:</span>
+                        <span class="font-mono text-cyan-400">1 kg Food = ~1,000 L Water</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function setExpiry(hrs) {
+        document.getElementById('expiry_hours').value = hrs;
+        updatePreview();
+    }
+
+    function updatePreview() {
+        const name = document.getElementById('item_name').value || "Steamed Rice, Dal Makhani & 50 Rotis";
+        const cat = document.getElementById('category').value;
+        const diet = document.getElementById('dietary_type').value;
+        const qty = parseFloat(document.getElementById('quantity_kg').value) || 25;
+        
+        let servings = parseInt(document.getElementById('servings_estimate').value);
+        if (!servings || isNaN(servings)) {
+            servings = Math.round(qty * 2.2);
+            document.getElementById('servings_estimate').value = servings;
+        }
+
+        const hrs = parseFloat(document.getElementById('expiry_hours').value) || 4;
+        const storage = document.getElementById('storage_condition').value;
+        const address = document.getElementById('pickup_address').value || "Campus Dining Complex";
+        const notes = document.getElementById('notes').value || "Packed in clean food-grade containers.";
+
+        // Update preview elements
+        document.getElementById('preview_title').innerText = name;
+        document.getElementById('preview_cat').innerText = cat;
+        document.getElementById('preview_diet').innerText = diet === 'Veg' ? '🌱 Pure Veg' : (diet === 'Non-Veg' ? '🍗 Non-Veg' : '🌿 Vegan');
+        document.getElementById('preview_quantity').innerText = `${qty} kg`;
+        document.getElementById('preview_servings').innerText = ` (~${servings} meals)`;
+        document.getElementById('preview_co2').innerText = `${(qty * 2.5).toFixed(1)} kg`;
+        document.getElementById('preview_urgency').innerText = `⏳ ${hrs.toFixed(1)} hrs left`;
+        document.getElementById('preview_storage').innerText = storage;
+        document.getElementById('preview_address').innerText = address;
+        document.getElementById('preview_notes').innerText = `"${notes}"`;
+    }
+
+    // Attach listeners
+    ['item_name', 'category', 'dietary_type', 'quantity_kg', 'servings_estimate', 'expiry_hours', 'storage_condition', 'pickup_address', 'notes'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', updatePreview);
+            el.addEventListener('change', updatePreview);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', updatePreview);
+</script>
+{% endblock %}

@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Surplus Food Marketplace{% endblock %}
+
+{% block content %}
+<!-- Top Header & Filter Controls -->
+<div class="mb-8">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-2">
+                <i data-lucide="radar" class="w-3.5 h-3.5 animate-pulse"></i>
+                Live Urgent Redistribution Feed
+            </div>
+            <h1 class="text-3xl font-heading font-extrabold text-white tracking-tight">Surplus Food Marketplace</h1>
+            <p class="text-sm text-slate-400 mt-1 max-w-2xl">
+                Real-time surplus listings from university messes, hostels, and banquet halls prioritized by expiry urgency for verified NGOs and shelters.
+            </p>
+        </div>
+
+        <!-- Quick Action Button -->
+        <div class="flex items-center space-x-3">
+            <a href="{{ url_for('donate') }}" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold text-sm shadow-lg shadow-emerald-500/25 flex items-center space-x-2 transition-all">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Post Surplus Food</span>
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-sm flex items-center space-x-2 transition-all">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i>
+                <span>Live Metrics</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Bar Card -->
+    <div class="glass-panel rounded-2xl p-4 border border-slate-800">
+        <form method="GET" action="{{ url_for('feed') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
+            
+            <!-- Status Filter -->
+            <div>
+                <label class="block text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1">Status</label>
+                <select name="status" onchange="this.form.submit()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                    <option value="Available" {% if status_filter == 'Available' %}selected{% endif %}>🟢 Available Now</option>
+                    <option value="Claimed" {% if status_filter == 'Claimed' %}selected{% endif %}>🟡 Claimed / En Route</option>
+                    <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>✅ Completed Handover</option>
+                    <option value="Expired" {% if status_filter == 'Expired' %}selected{% endif %}>⛔ Expired</option>
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>🌐 All Listings</option>
+                </select>
+            </div>
+
+            <!-- Dietary Filter -->
+            <div>
+                <label class="block text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1">Dietary Type</label>
+                <select name="diet" onchange="this.form.submit()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                    <option value="all" {% if diet_filter == 'all' %}selected{% endif %}>All Diets</option>
+                    <option value="Veg" {% if diet_filter == 'Veg' %}selected{% endif %}>🌱 Pure Vegetarian</option>
+                    <option value="Non-Veg" {% if diet_filter == 'Non-Veg' %}selected{% endif %}>🍗 Non-Vegetarian</option>
+                    <option value="Vegan" {% if diet_filter == 'Vegan' %}selected{% endif %}>🌿 Vegan</option>
+                </select>
+            </div>
+
+            <!-- Category Filter -->
+            <div>
+                <label class="block text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1">Category</label>
+                <select name="category" onchange="this.form.submit()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                    <option value="all" {% if category_filter == 'all' %}selected{% endif %}>All Categories</option>
+                    <option value="Cooked Meal" {% if category_filter == 'Cooked Meal' %}selected{% endif %}>🍲 Cooked Meal</option>
+                    <option value="Bakery" {% if category_filter == 'Bakery' %}selected{% endif %}>🥐 Bakery & Bread</option>
+                    <option value="Packaged Goods" {% if category_filter == 'Packaged Goods' %}selected{% endif %}>📦 Packaged Goods</option>
+                    <option value="Raw Produce" {% if category_filter == 'Raw Produce' %}selected{% endif %}>🥦 Raw Produce</option>
+                </select>
+            </div>
+
+            <!-- Urgency Filter -->
+            <div>
+                <label class="block text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1">Expiry Urgency</label>
+                <select name="urgency" onchange="this.form.submit()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                    <option value="all" {% if urgency_filter == 'all' %}selected{% endif %}>All Urgency Levels</option>
+                    <option value="critical" {% if urgency_filter == 'critical' %}selected{% endif %}>🔥 Critical (&lt; 2h left)</option>
+                    <option value="warning" {% if urgency_filter == 'warning' %}selected{% endif %}>⏳ Warning (2-6h left)</option>
+                    <option value="safe" {% if urgency_filter == 'safe' %}selected{% endif %}>🛡️ Safe (&gt; 6h left)</option>
+                </select>
+            </div>
+
+            <!-- Reset / Quick Count -->
+            <div class="flex items-end space-x-2 pt-4 sm:pt-0">
+                <a href="{{ url_for('feed') }}" class="w-full px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold text-center border border-slate-700 transition-colors">
+                    Reset Filters
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Donations Grid -->
+{% if donations %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for item in donations %}
+    <div class="glass-card rounded-2xl overflow-hidden flex flex-col justify-between border 
+        {% if item.current_status == 'Available' and item.urgency_level == 'critical' %}border-rose-500/40 shadow-lg shadow-rose-950/20
+        {% elif item.current_status == 'Claimed' %}border-amber-500/40
+        {% elif item.current_status == 'Completed' %}border-emerald-500/30 opacity-80
+        {% elif item.current_status == 'Expired' %}border-slate-800 opacity-60
+        {% else %}border-slate-800{% endif %}">
+        
+        <!-- Card Top Bar: Urgency Countdown & Badges -->
+        <div class="p-5 pb-3">
+            <div class="flex items-center justify-between gap-2 mb-3">
+                <!-- Dynamic Status Badge -->
+                {% if item.current_status == 'Available' %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        Available
+                    </span>
+                {% elif item.current_status == 'Claimed' %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                        <i data-lucide="truck" class="w-3.5 h-3.5"></i>
+                        Claimed / In-Transit
+                    </span>
+                {% elif item.current_status == 'Completed' %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/30">
+                        <i data-lucide="check-check" class="w-3.5 h-3.5"></i>
+                        Redistributed
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                        Expired
+                    </span>
+                {% endif %}
+
+                <!-- Urgency Countdown Ticker -->
+                <div class="text-xs font-mono" data-expiry-time="{{ item.expires_at.isoformat() }}">
+                    <span class="text-slate-400">calculating...</span>
+                </div>
+            </div>
+
+            <!-- Item Title & Category Info -->
+            <div class="flex items-start justify-between gap-2">
+                <h3 class="text-lg font-heading font-bold text-white group-hover:text-emerald-400 transition-colors leading-snug">
+                    {{ item.item_name }}
+                </h3>
+            </div>
+
+            <!-- Dietary and Category Tags -->
+            <div class="flex items-center gap-2 mt-2 flex-wrap">
+                <!-- Veg / Non-Veg Indicator -->
+                {% if item.dietary_type == 'Veg' %}
+                    <span class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 border border-emerald-200"></span>
+                        Pure Veg
+                    </span>
+                {% elif item.dietary_type == 'Non-Veg' %}
+                    <span class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md bg-rose-950/80 text-rose-300 border border-rose-500/40">
+                        <span class="w-2 h-2 rounded-full bg-rose-400 border border-rose-200"></span>
+                        Non-Veg
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md bg-teal-950/80 text-teal-300 border border-teal-500/40">
+                        🌱 Vegan
+                    </span>
+                {% endif %}
+
+                <!-- Category Pill -->
+                <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+                    {{ item.category }}
+                </span>
+
+                <!-- Storage Pill -->
+                <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-indigo-950/60 text-indigo-300 border border-indigo-500/30 flex items-center gap-1">
+                    <i data-lucide="thermometer-snowflake" class="w-3 h-3"></i>
+                    {{ item.storage_condition }}
+                </span>
+            </div>
+
+            <!-- Quantity & Impact Summary -->
+            <div class="grid grid-cols-2 gap-2 mt-4 p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
+                <div>
+                    <span class="text-slate-400 block text-[10px] uppercase font-mono">Quantity</span>
+                    <span class="font-bold text-white text-sm">{{ item.quantity_kg }} kg</span>
+                    <span class="text-slate-400 text-[11px]"> (~{{ item.servings_estimate }} meals)</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block text-[10px] uppercase font-mono">CO₂ Prevention</span>
+                    <span class="font-bold text-emerald-400 text-sm">{{ item.co2_saved_kg }} kg</span>
+                    <span class="text-slate-400 text-[11px]"> avoided</span>
+                </div>
+            </div>
+
+            <!-- Notes / Handling Remarks -->
+            {% if item.notes %}
+            <p class="mt-3 text-xs text-slate-400 line-clamp-2 italic bg-slate-900/40 p-2 rounded border border-slate-800/60">
+                "{{ item.notes }}"
+            </p>
+            {% endif %}
+
+            <!-- Location & Contact Info -->
+            <div class="mt-4 pt-3 border-t border-slate-800 text-xs space-y-1.5 text-slate-300">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                    <span class="font-semibold text-slate-200">{{ item.donor.organization }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-slate-400">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                    <span class="truncate">{{ item.pickup_address }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Footer & Role-Aware Action Buttons -->
+        <div class="p-4 bg-slate-900/90 border-t border-slate-800/80">
+            {% if item.current_status == 'Available' %}
+                <!-- Claim Action -->
+                <form action="{{ url_for('claim_donation', id=item.id) }}" method="POST" onsubmit="return confirm('Confirm claim for {{ item.item_name }}? You will receive a verification PIN for pickup.');">
+                    <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs tracking-wide uppercase transition-all shadow-md shadow-emerald-700/20 flex items-center justify-center gap-2">
+                        <i data-lucide="hand-heart" class="w-4 h-4"></i>
+                        Claim for Distribution
+                    </button>
+                </form>
+
+            {% elif item.current_status == 'Claimed' %}
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs bg-amber-950/40 border border-amber-500/30 rounded-lg p-2.5">
+                        <div class="flex items-center gap-1.5 text-amber-300">
+                            <i data-lucide="key" class="w-4 h-4"></i>
+                            <span class="font-mono font-bold tracking-wider">PIN: {{ item.claim_pin }}</span>
+                        </div>
+                        <span class="text-[11px] text-amber-200/80 truncate">Claimed by {{ item.claimed_by_user.organization if item.claimed_by_user else 'Verified NGO' }}</span>
+                    </div>
+
+                    <!-- Handover Verification Form -->
+                    <form action="{{ url_for('complete_donation', id=item.id) }}" method="POST" class="flex gap-2">
+                        <input type="text" name="pin" placeholder="Enter PIN to complete" required maxlength="6" 
+                               value="{{ item.claim_pin }}"
+                               class="w-2/3 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-center font-mono tracking-widest text-white focus:outline-none focus:border-emerald-500">
+                        <button type="submit" class="w-1/3 py-1.5 px-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                            Verify
+                        </button>
+                    </form>
+
+                    <!-- Cancel / Release option -->
+                    <form action="{{ url_for('cancel_claim', id=item.id) }}" method="POST">
+                        <button type="submit" class="w-full text-center text-[10px] text-slate-400 hover:text-rose-400 transition-colors pt-1">
+                            Release Reservation
+                        </button>
+                    </form>
+                </div>
+
+            {% elif item.current_status == 'Completed' %}
+                <div class="text-center py-1 text-xs text-teal-400 font-semibold flex items-center justify-center gap-1.5">
+                    <i data-lucide="award" class="w-4 h-4"></i>
+                    <span>Distributed (PIN {{ item.claim_pin }} Verified)</span>
+                </div>
+
+            {% else %}
+                <div class="text-center py-1 text-xs text-rose-400/80 font-medium flex items-center justify-center gap-1.5">
+                    <i data-lucide="lock" class="w-4 h-4"></i>
+                    <span>Safety Window Passed • Decommissioned</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<!-- Empty State -->
+<div class="glass-panel rounded-2xl p-12 text-center border border-slate-800 max-w-lg mx-auto my-12">
+    <div class="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center mx-auto mb-4 text-slate-400">
+        <i data-lucide="package-search" class="w-8 h-8"></i>
+    </div>
+    <h3 class="text-lg font-heading font-bold text-white">No Food Donations Found</h3>
+    <p class="text-xs text-slate-400 mt-2">
+        There are currently no listings matching the selected filters.
+    </p>
+    <div class="mt-6 flex justify-center gap-3">
+        <a href="{{ url_for('feed') }}" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700">
+            Clear Filters
+        </a>
+        <a href="{{ url_for('donate') }}" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/20">
+            Create New Donation
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

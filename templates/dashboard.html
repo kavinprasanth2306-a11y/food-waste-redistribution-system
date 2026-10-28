@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Impact & Environmental Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold mb-2">
+                <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i>
+                UN SDG 2 & 12 Sustainability Tracker
+            </div>
+            <h1 class="text-3xl font-heading font-extrabold text-white tracking-tight">Environmental Impact & Analytics</h1>
+            <p class="text-sm text-slate-400 mt-1 max-w-2xl">
+                Real-time tracking of food diverted from landfills, vulnerable community meals provided, and verified greenhouse gas emissions mitigated.
+            </p>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <button onclick="window.print()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 flex items-center space-x-2 transition-colors">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>Print Report</span>
+            </button>
+            <a href="{{ url_for('feed') }}" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/20 flex items-center space-x-2">
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                <span>View Live Feed</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Top KPI Cards (4 cols) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <!-- Card 1: Total Food Saved -->
+        <div class="glass-card rounded-2xl p-5 border border-emerald-500/30 relative overflow-hidden group">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-mono uppercase tracking-wider text-slate-400">Food Diverted</span>
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <i data-lucide="scale" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="flex items-baseline space-x-2">
+                <span class="text-3xl font-heading font-extrabold text-white">{{ total_kg_saved }}</span>
+                <span class="text-sm font-semibold text-emerald-400">kg</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+                <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-400"></i>
+                Total solid food rescued from mess & events
+            </p>
+        </div>
+
+        <!-- Card 2: Meals Saved -->
+        <div class="glass-card rounded-2xl p-5 border border-amber-500/30 relative overflow-hidden group">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-mono uppercase tracking-wider text-slate-400">Nutritional Servings</span>
+                <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                    <i data-lucide="utensils" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="flex items-baseline space-x-2">
+                <span class="text-3xl font-heading font-extrabold text-white">{{ total_meals_saved }}</span>
+                <span class="text-sm font-semibold text-amber-400">meals</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+                <i data-lucide="heart" class="w-3.5 h-3.5 text-amber-400"></i>
+                Distributed to verified shelter residents
+            </p>
+        </div>
+
+        <!-- Card 3: CO2 Emissions Avoided -->
+        <div class="glass-card rounded-2xl p-5 border border-teal-500/30 relative overflow-hidden group">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-teal-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-mono uppercase tracking-wider text-slate-400">CO₂e Avoided</span>
+                <div class="w-9 h-9 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center">
+                    <i data-lucide="cloud-off" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="flex items-baseline space-x-2">
+                <span class="text-3xl font-heading font-extrabold text-white">{{ total_co2_avoided }}</span>
+                <span class="text-sm font-semibold text-teal-400">kg CO₂</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+                <i data-lucide="leaf" class="w-3.5 h-3.5 text-teal-400"></i>
+                1 kg waste ≈ 2.5 kg greenhouse emissions
+            </p>
+        </div>
+
+        <!-- Card 4: Water Footprint Saved -->
+        <div class="glass-card rounded-2xl p-5 border border-cyan-500/30 relative overflow-hidden group">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-mono uppercase tracking-wider text-slate-400">Water Preserved</span>
+                <div class="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                    <i data-lucide="droplets" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="flex items-baseline space-x-2">
+                <span class="text-3xl font-heading font-extrabold text-white">{{ "{:,}".format(total_water_saved) }}</span>
+                <span class="text-sm font-semibold text-cyan-400">liters</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i>
+                Embedded virtual agricultural water saved
+            </p>
+        </div>
+    </div>
+
+    <!-- Charts Section (2 Columns) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Chart 1: Category Distribution -->
+        <div class="glass-panel rounded-2xl p-6 border border-slate-800">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-heading font-bold text-white flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-400"></i>
+                    Food Waste Diverted by Category (kg)
+                </h3>
+            </div>
+            <div class="relative h-64 flex items-center justify-center">
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 text-center text-xs text-slate-400">
+                Cooked meals from mess halls comprise the highest redistribution volume.
+            </div>
+        </div>
+
+        <!-- Chart 2: Redistribution Status Overview -->
+        <div class="glass-panel rounded-2xl p-6 border border-slate-800">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-heading font-bold text-white flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-cyan-400"></i>
+                    Listing Status Distribution
+                </h3>
+            </div>
+            <div class="relative h-64 flex items-center justify-center">
+                <canvas id="statusChart"></canvas>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 text-center text-xs text-slate-400">
+                Real-time snapshot across all registered partner entities.
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-World Impact Equivalency Strip -->
+    <div class="glass-panel rounded-2xl p-6 border border-slate-800 bg-gradient-to-r from-emerald-950/30 via-slate-900 to-indigo-950/30">
+        <h3 class="text-sm font-heading font-bold text-white mb-3 flex items-center gap-2">
+            <i data-lucide="globe-2" class="w-4 h-4 text-emerald-400"></i>
+            Real-World Environmental Equivalency Benchmarks
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span class="text-slate-400 block text-[10px] uppercase font-mono">Automobile Km Avoided</span>
+                <span class="text-lg font-bold text-emerald-400">{{ "%.1f"|format(total_co2_avoided * 4.1) }} km</span>
+                <p class="text-[11px] text-slate-400 mt-1">Equivalent passenger car travel emissions negated.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span class="text-slate-400 block text-[10px] uppercase font-mono">Smartphone Charges</span>
+                <span class="text-lg font-bold text-amber-400">{{ "{:,}".format(int(total_co2_avoided * 120)) }} charges</span>
+                <p class="text-[11px] text-slate-400 mt-1">Grid energy equivalent saved from wasted food production.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span class="text-slate-400 block text-[10px] uppercase font-mono">Tree Seedlings Equivalent</span>
+                <span class="text-lg font-bold text-teal-400">{{ "%.1f"|format(total_co2_avoided / 21.7) }} trees</span>
+                <p class="text-[11px] text-slate-400 mt-1">Equal to annual carbon sequestration by growing trees.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Log & Distribution Ledger -->
+    <div class="glass-panel rounded-2xl p-6 border border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-heading font-bold text-white flex items-center gap-2">
+                <i data-lucide="list-checks" class="w-4 h-4 text-emerald-400"></i>
+                Redistribution Audit Ledger
+            </h3>
+            <span class="text-xs text-slate-400 font-mono">Immutable Log Entries</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-900/90 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800">
+                    <tr>
+                        <th class="py-3 px-4">Item Name</th>
+                        <th class="py-3 px-4">Donor Organization</th>
+                        <th class="py-3 px-4">Quantity / Servings</th>
+                        <th class="py-3 px-4">CO₂ Prevented</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4">Recipient</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/80">
+                    {% for item in recent_activity %}
+                    <tr class="hover:bg-slate-800/40 transition-colors">
+                        <td class="py-3 px-4 font-semibold text-white">{{ item.item_name }}</td>
+                        <td class="py-3 px-4 text-slate-300">{{ item.donor.organization }}</td>
+                        <td class="py-3 px-4 font-mono">{{ item.quantity_kg }} kg ({{ item.servings_estimate }} meals)</td>
+                        <td class="py-3 px-4 font-mono text-emerald-400 font-semibold">{{ item.co2_saved_kg }} kg</td>
+                        <td class="py-3 px-4">
+                            {% if item.current_status == 'Available' %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Available</span>
+                            {% elif item.current_status == 'Claimed' %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">Claimed</span>
+                            {% elif item.current_status == 'Completed' %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal-400 border border-teal-500/20">Completed</span>
+                            {% else %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">Expired</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-slate-400">
+                            {{ item.claimed_by_user.organization if item.claimed_by_user else '—' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Render Category Breakdown Doughnut Chart
+        const catCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(catCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ category_labels|tojson }},
+                datasets: [{
+                    data: {{ category_data|tojson }},
+                    backgroundColor: [
+                        '#10b981', // emerald
+                        '#f59e0b', // amber
+                        '#3b82f6', // blue
+                        '#a855f7', // purple
+                        '#06b6d4'  // cyan
+                    ],
+                    borderColor: '#0b0f19',
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } }
+                    }
+                },
+                cutout: '68%'
+            }
+        });
+
+        // Render Status Bar Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Available', 'Claimed', 'Completed', 'Expired'],
+                datasets: [{
+                    label: 'Listing Count',
+                    data: [
+                        {{ status_counts.Available }},
+                        {{ status_counts.Claimed }},
+                        {{ status_counts.Completed }},
+                        {{ status_counts.Expired }}
+                    ],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(20, 184, 166, 0.8)',
+                        'rgba(244, 63, 94, 0.8)'
+                    ],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans' } },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: { color: '#94a3b8', stepSize: 1 },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

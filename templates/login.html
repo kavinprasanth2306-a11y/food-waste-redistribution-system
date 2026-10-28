@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Authentication & Portal Access{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto my-6">
+    <!-- Quick Demo Access Banner -->
+    <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-950/60 to-indigo-950/60 border border-emerald-500/30 text-xs">
+        <div class="flex items-center gap-2 text-emerald-400 font-bold mb-1.5">
+            <i data-lucide="zap" class="w-4 h-4"></i>
+            <span>Instant Evaluation 1-Click Access</span>
+        </div>
+        <p class="text-slate-400 mb-3 text-[11px]">
+            For testing or viva demonstration, jump directly into any role using preconfigured credentials:
+        </p>
+        <div class="grid grid-cols-3 gap-2 text-center">
+            <a href="{{ url_for('switch_role', role='donor') }}" class="p-2 rounded-lg bg-slate-900 border border-amber-500/30 hover:border-amber-400 text-amber-300 font-semibold text-[11px] transition-all">
+                Mess Donor
+            </a>
+            <a href="{{ url_for('switch_role', role='receiver') }}" class="p-2 rounded-lg bg-slate-900 border border-blue-500/30 hover:border-blue-400 text-blue-300 font-semibold text-[11px] transition-all">
+                Shelter NGO
+            </a>
+            <a href="{{ url_for('switch_role', role='admin') }}" class="p-2 rounded-lg bg-slate-900 border border-purple-500/30 hover:border-purple-400 text-purple-300 font-semibold text-[11px] transition-all">
+                Admin
+            </a>
+        </div>
+    </div>
+
+    <!-- Login / Register Card -->
+    <div class="glass-panel rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-2xl">
+        <!-- Tabs -->
+        <div class="flex border-b border-slate-800 mb-6">
+            <button type="button" id="tabLogin" onclick="showTab('login')" class="flex-1 pb-3 text-sm font-semibold text-emerald-400 border-b-2 border-emerald-400 transition-colors">
+                Sign In
+            </button>
+            <button type="button" id="tabRegister" onclick="showTab('register')" class="flex-1 pb-3 text-sm font-semibold text-slate-400 hover:text-slate-200 transition-colors">
+                Register Entity
+            </button>
+        </div>
+
+        <!-- Login Form -->
+        <form action="{{ url_for('login') }}" method="POST" id="formLogin" class="space-y-4 {% if is_register %}hidden{% endif %}">
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Email Address</label>
+                <input type="email" name="email" required placeholder="donor@campus.edu" value="donor@campus.edu"
+                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Password</label>
+                <input type="password" name="password" required placeholder="••••••••" value="donor123"
+                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+            </div>
+
+            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2">
+                <i data-lucide="log-in" class="w-4 h-4"></i>
+                Sign In to Platform
+            </button>
+
+            <div class="text-center pt-2 text-[11px] text-slate-400">
+                Default Passwords: <code class="text-emerald-400">donor123</code>, <code class="text-emerald-400">receiver123</code>, <code class="text-emerald-400">admin123</code>
+            </div>
+        </form>
+
+        <!-- Register Form -->
+        <form action="{{ url_for('register') }}" method="POST" id="formRegister" class="space-y-4 {% if not is_register %}hidden{% endif %}">
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Full Name / Coordinator</label>
+                <input type="text" name="name" required placeholder="Sunil Rao"
+                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Organization / Mess Name</label>
+                <input type="text" name="organization" required placeholder="Hostel 4 Mess / Seva Food Bank"
+                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Platform Role</label>
+                <select name="role" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    <option value="donor">🍲 Food Donor (Mess / Hostel / Restaurant)</option>
+                    <option value="receiver">🤝 Claimant / Receiver (Shelter / NGO / Volunteer)</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Email</label>
+                    <input type="email" name="email" required placeholder="contact@mess.edu"
+                           class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Phone</label>
+                    <input type="text" name="phone" required placeholder="+91 98765 00000"
+                           class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Physical Address</label>
+                <input type="text" name="address" required placeholder="Campus North Wing Gate"
+                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Password</label>
+                <input type="password" name="password" required placeholder="Create password"
+                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            </div>
+
+            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                Create Verified Account
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showTab(tab) {
+        const formLogin = document.getElementById('formLogin');
+        const formRegister = document.getElementById('formRegister');
+        const tabLogin = document.getElementById('tabLogin');
+        const tabRegister = document.getElementById('tabRegister');
+
+        if (tab === 'login') {
+            formLogin.classList.remove('hidden');
+            formRegister.classList.add('hidden');
+            tabLogin.className = "flex-1 pb-3 text-sm font-semibold text-emerald-400 border-b-2 border-emerald-400 transition-colors";
+            tabRegister.className = "flex-1 pb-3 text-sm font-semibold text-slate-400 hover:text-slate-200 transition-colors";
+        } else {
+            formLogin.classList.add('hidden');
+            formRegister.classList.remove('hidden');
+            tabRegister.className = "flex-1 pb-3 text-sm font-semibold text-emerald-400 border-b-2 border-emerald-400 transition-colors";
+            tabLogin.className = "flex-1 pb-3 text-sm font-semibold text-slate-400 hover:text-slate-200 transition-colors";
+        }
+    }
+</script>
+{% endblock %}

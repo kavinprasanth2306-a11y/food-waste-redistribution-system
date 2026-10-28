@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Platform Moderator Console{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-semibold mb-2">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                Administrative Moderation Console
+            </div>
+            <h1 class="text-3xl font-heading font-extrabold text-white tracking-tight">System & Trust Governance</h1>
+            <p class="text-sm text-slate-400 mt-1">
+                Moderator tools to verify institutional donors, authorize shelters, enforce food safety expirations, and audit redistribution transactions.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <span class="px-3 py-1.5 rounded-lg bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 text-xs font-mono">
+                System Status: Active & Operational
+            </span>
+        </div>
+    </div>
+
+    <!-- User Accounts & Organization Verification -->
+    <div class="glass-panel rounded-2xl p-6 border border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-heading font-bold text-white flex items-center gap-2">
+                <i data-lucide="users" class="w-4 h-4 text-purple-400"></i>
+                Registered Institutional Donors & Receivers
+            </h3>
+            <span class="text-xs text-slate-400 font-mono">{{ users|length }} Total Accounts</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-900/90 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800">
+                    <tr>
+                        <th class="py-3 px-4">Entity / Manager</th>
+                        <th class="py-3 px-4">Role</th>
+                        <th class="py-3 px-4">Contact Phone</th>
+                        <th class="py-3 px-4">Organization Name</th>
+                        <th class="py-3 px-4">Trust Status</th>
+                        <th class="py-3 px-4 text-right">Moderator Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/80">
+                    {% for u in users %}
+                    <tr class="hover:bg-slate-800/40 transition-colors">
+                        <td class="py-3 px-4">
+                            <div class="font-semibold text-white">{{ u.name }}</div>
+                            <div class="text-[11px] text-slate-400 font-mono">{{ u.email }}</div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase
+                                {% if u.role == 'donor' %}bg-amber-500/10 text-amber-400 border border-amber-500/30
+                                {% elif u.role == 'receiver' %}bg-blue-500/10 text-blue-400 border border-blue-500/30
+                                {% else %}bg-purple-500/10 text-purple-400 border border-purple-500/30{% endif %}">
+                                {{ u.role }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 font-mono text-slate-300">{{ u.phone }}</td>
+                        <td class="py-3 px-4 text-slate-300">{{ u.organization }}</td>
+                        <td class="py-3 px-4">
+                            {% if u.is_verified %}
+                                <span class="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+                                    <i data-lucide="badge-check" class="w-4 h-4"></i>
+                                    Verified
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 text-amber-400 font-medium">
+                                    <i data-lucide="clock" class="w-4 h-4"></i>
+                                    Pending Audit
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <form action="{{ url_for('admin_toggle_user', user_id=u.id) }}" method="POST" class="inline">
+                                <button type="submit" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] border border-slate-700 transition-colors">
+                                    Toggle Verification
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Food Item Listings Management & Moderation -->
+    <div class="glass-panel rounded-2xl p-6 border border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-heading font-bold text-white flex items-center gap-2">
+                <i data-lucide="clipboard-list" class="w-4 h-4 text-emerald-400"></i>
+                Active & Historical Listings Moderation
+            </h3>
+            <span class="text-xs text-slate-400 font-mono">{{ donations|length }} Total Records</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-900/90 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800">
+                    <tr>
+                        <th class="py-3 px-4">ID</th>
+                        <th class="py-3 px-4">Item Name</th>
+                        <th class="py-3 px-4">Donor Org</th>
+                        <th class="py-3 px-4">Quantity</th>
+                        <th class="py-3 px-4">Expiry Window</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4 text-right">Emergency Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/80">
+                    {% for d in donations %}
+                    <tr class="hover:bg-slate-800/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-slate-400">#{{ d.id }}</td>
+                        <td class="py-3 px-4 font-semibold text-white">{{ d.item_name }}</td>
+                        <td class="py-3 px-4 text-slate-300">{{ d.donor.organization }}</td>
+                        <td class="py-3 px-4 font-mono">{{ d.quantity_kg }} kg</td>
+                        <td class="py-3 px-4 font-mono text-slate-300">
+                            {{ d.expires_at.strftime('%H:%M (%d %b)') }}
+                        </td>
+                        <td class="py-3 px-4">
+                            {% if d.current_status == 'Available' %}
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Available</span>
+                            {% elif d.current_status == 'Claimed' %}
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">Claimed (PIN: {{ d.claim_pin }})</span>
+                            {% elif d.current_status == 'Completed' %}
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-500/10 text-teal-400 border border-teal-500/20">Completed</span>
+                            {% else %}
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">Expired</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-right space-x-2">
+                            <form action="{{ url_for('admin_delete_donation', id=d.id) }}" method="POST" class="inline" onsubmit="return confirm('Remove listing #{{ d.id }} permanently?');">
+                                <button type="submit" class="px-2.5 py-1 rounded bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-[11px] border border-rose-500/30 transition-colors">
+                                    Remove
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

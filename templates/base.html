@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Smart Food Waste Platform{% endblock %} | EcoRescue</title>
+    
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN with custom config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        heading: ['"Outfit"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        },
+                        dark: {
+                            800: '#111827',
+                            850: '#0f172a',
+                            900: '#0b0f19',
+                            950: '#070a12',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background-color: #080c14;
+            color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(59, 130, 246, 0.06) 0%, transparent 40%);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(16, 185, 129, 0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 15px 0 rgba(16, 185, 129, 0.1);
+        }
+
+        .badge-pulse {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-200 antialiased selection:bg-emerald-500 selection:text-white">
+
+    <!-- Academic Demo Evaluator Quick Switcher Bar -->
+    <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-indigo-950 border-b border-emerald-500/20 py-2 px-4 text-xs font-mono">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-2">
+                <span class="flex h-2 w-2 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span class="text-emerald-400 font-semibold tracking-wider uppercase">IA3 Evaluation Demo Mode:</span>
+                <span class="text-slate-400">Quick Test Personas ➔</span>
+            </div>
+            
+            <div class="flex items-center space-x-2 flex-wrap">
+                <a href="{{ url_for('switch_role', role='donor') }}" 
+                   class="px-2.5 py-1 rounded bg-slate-800/80 hover:bg-emerald-600/30 border border-slate-700 hover:border-emerald-500/50 transition-all flex items-center space-x-1.5 {% if current_user and current_user.role == 'donor' %}ring-2 ring-emerald-500 text-emerald-300 font-bold bg-emerald-950/40{% endif %}">
+                    <i data-lucide="chef-hat" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span>Campus Mess (Donor)</span>
+                </a>
+                <a href="{{ url_for('switch_role', role='receiver') }}" 
+                   class="px-2.5 py-1 rounded bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 hover:border-blue-500/50 transition-all flex items-center space-x-1.5 {% if current_user and current_user.role == 'receiver' %}ring-2 ring-blue-500 text-blue-300 font-bold bg-blue-950/40{% endif %}">
+                    <i data-lucide="heart-handshake" class="w-3.5 h-3.5 text-rose-400"></i>
+                    <span>Hope Shelter (Receiver / NGO)</span>
+                </a>
+                <a href="{{ url_for('switch_role', role='admin') }}" 
+                   class="px-2.5 py-1 rounded bg-slate-800/80 hover:bg-purple-600/30 border border-slate-700 hover:border-purple-500/50 transition-all flex items-center space-x-1.5 {% if current_user and current_user.role == 'admin' %}ring-2 ring-purple-500 text-purple-300 font-bold bg-purple-950/40{% endif %}">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-purple-400"></i>
+                    <span>System Admin</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand Logo -->
+                <div class="flex items-center space-x-3">
+                    <a href="{{ url_for('feed') }}" class="flex items-center space-x-2.5 group">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+                            <i data-lucide="leaf" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <span class="font-heading font-bold text-xl tracking-tight text-white flex items-center gap-1.5">
+                                EcoRescue <span class="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">IA3 Hub</span>
+                            </span>
+                            <p class="text-[10px] text-slate-400 font-medium">Smart Food Waste Redistribution</p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Nav Links -->
+                <nav class="hidden md:flex items-center space-x-1">
+                    <a href="{{ url_for('feed') }}" 
+                       class="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1.5 {% if request.endpoint == 'feed' %}text-emerald-400 bg-emerald-500/10 border border-emerald-500/20{% else %}text-slate-300 hover:text-white hover:bg-slate-800/60{% endif %}">
+                        <i data-lucide="store" class="w-4 h-4"></i>
+                        <span>Marketplace Feed</span>
+                    </a>
+
+                    <a href="{{ url_for('donate') }}" 
+                       class="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1.5 {% if request.endpoint == 'donate' %}text-emerald-400 bg-emerald-500/10 border border-emerald-500/20{% else %}text-slate-300 hover:text-white hover:bg-slate-800/60{% endif %}">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Donate Food</span>
+                    </a>
+
+                    <a href="{{ url_for('dashboard') }}" 
+                       class="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1.5 {% if request.endpoint == 'dashboard' %}text-emerald-400 bg-emerald-500/10 border border-emerald-500/20{% else %}text-slate-300 hover:text-white hover:bg-slate-800/60{% endif %}">
+                        <i data-lucide="activity" class="w-4 h-4 text-cyan-400"></i>
+                        <span>Impact Dashboard</span>
+                    </a>
+
+                    <a href="{{ url_for('admin_portal') }}" 
+                       class="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1.5 {% if request.endpoint == 'admin_portal' %}text-purple-400 bg-purple-500/10 border border-purple-500/20{% else %}text-slate-300 hover:text-white hover:bg-slate-800/60{% endif %}">
+                        <i data-lucide="shield" class="w-4 h-4 text-purple-400"></i>
+                        <span>Admin Console</span>
+                    </a>
+                </nav>
+
+                <!-- User Profile / Session Status -->
+                <div class="flex items-center space-x-3">
+                    {% if current_user %}
+                    <div class="flex items-center space-x-3 bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-1.5">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs uppercase
+                            {% if current_user.role == 'donor' %}bg-amber-500/20 text-amber-400 border border-amber-500/30
+                            {% elif current_user.role == 'receiver' %}bg-blue-500/20 text-blue-400 border border-blue-500/30
+                            {% else %}bg-purple-500/20 text-purple-400 border border-purple-500/30{% endif %}">
+                            {{ current_user.name[:2] }}
+                        </div>
+                        <div class="hidden sm:block text-left text-xs leading-tight">
+                            <div class="font-semibold text-slate-200">{{ current_user.name.split('(')[0] }}</div>
+                            <div class="text-[10px] text-slate-400 capitalize flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                {{ current_user.organization[:24] }}
+                            </div>
+                        </div>
+                        <a href="{{ url_for('logout') }}" title="Logout" class="text-slate-400 hover:text-rose-400 transition-colors pl-1">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md shadow-emerald-600/20">
+                        Sign In / Register
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="mb-3 p-4 rounded-xl flex items-start justify-between border backdrop-blur-md shadow-lg transition-all animate-fade-in
+                    {% if category == 'success' %}bg-emerald-950/60 border-emerald-500/40 text-emerald-200
+                    {% elif category == 'danger' %}bg-rose-950/60 border-rose-500/40 text-rose-200
+                    {% elif category == 'warning' %}bg-amber-950/60 border-amber-500/40 text-amber-200
+                    {% else %}bg-slate-900/80 border-slate-700 text-slate-200{% endif %}">
+                    <div class="flex items-center space-x-3">
+                        {% if category == 'success' %}
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+                        {% elif category == 'danger' %}
+                            <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-400 shrink-0"></i>
+                        {% elif category == 'warning' %}
+                            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400 shrink-0"></i>
+                        {% else %}
+                            <i data-lucide="info" class="w-5 h-5 text-blue-400 shrink-0"></i>
+                        {% endif %}
+                        <span class="text-sm font-medium">{{ message }}</span>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white transition-colors">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Dynamic Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Project Academic Footer -->
+    <footer class="glass-panel border-t border-slate-800/80 py-6 mt-12 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <div>
+                    <p class="font-semibold text-slate-300">Smart Food Waste Management & Redistribution Platform</p>
+                    <p class="text-[11px] text-slate-400">Academic Evaluation (IA3) Micro-Project • UN SDG 2 (Zero Hunger) & SDG 12 (Responsible Consumption)</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-6 text-[11px]">
+                <span class="text-slate-400"><strong class="text-slate-300">Metric Standard:</strong> 1 kg Food Saved = 2.5 kg CO₂e avoided</span>
+                <span class="text-slate-400"><strong class="text-slate-300">DB Engine:</strong> SQLite 3 (Zero Setup)</span>
+                <span class="text-slate-400"><strong class="text-slate-300">Backend:</strong> Flask 3.1</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Init Lucide Icons and Global Scripts -->
+    <script>
+        lucide.createIcons();
+
+        // Client-side countdown updater for live urgency tickers
+        function updateTimers() {
+            document.querySelectorAll('[data-expiry-time]').forEach(el => {
+                const expiry = new Date(el.getAttribute('data-expiry-time')).getTime();
+                const now = new Date().getTime();
+                const diff = expiry - now;
+
+                if (diff <= 0) {
+                    el.innerHTML = '<span class="text-rose-400 font-bold flex items-center gap-1"><i data-lucide="clock-alert" class="w-3.5 h-3.5"></i> Expired</span>';
+                    el.classList.add('text-rose-400');
+                } else {
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+                    
+                    let timeStr = `${hours}h ${mins}m ${secs}s left`;
+                    if (hours === 0 && mins < 60) {
+                        el.innerHTML = `<span class="text-rose-400 font-bold flex items-center gap-1 badge-pulse"><i data-lucide="flame" class="w-3.5 h-3.5"></i> ${timeStr}</span>`;
+                    } else if (hours < 3) {
+                        el.innerHTML = `<span class="text-amber-400 font-medium flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> ${timeStr}</span>`;
+                    } else {
+                        el.innerHTML = `<span class="text-emerald-400 font-medium flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> ${timeStr}</span>`;
+                    }
+                }
+            });
+            lucide.createIcons();
+        }
+
+        setInterval(updateTimers, 1000);
+        document.addEventListener('DOMContentLoaded', updateTimers);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
