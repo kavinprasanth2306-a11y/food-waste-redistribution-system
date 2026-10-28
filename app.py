@@ -31,6 +31,8 @@ DEFAULT_IMAGES = {
     'Raw Produce': '/static/images/default_food.svg'
 }
 
+SUPER_ADMIN_EMAIL = 'kavinprasanth2306@gmail.com'
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -110,6 +112,11 @@ def init_db():
         cursor.execute("ALTER TABLE food_listings ADD COLUMN image_url TEXT")
         conn.commit()
 
+    # Enforce admin privilege exclusivity: only SUPER_ADMIN_EMAIL can be 'admin'
+    cursor.execute("UPDATE users SET role = 'admin' WHERE LOWER(email) = LOWER(?)", (SUPER_ADMIN_EMAIL,))
+    cursor.execute("UPDATE users SET role = 'receiver' WHERE role = 'admin' AND LOWER(email) != LOWER(?)", (SUPER_ADMIN_EMAIL,))
+    conn.commit()
+
     # Check if data exists; if not, seed realistic Indian campus/restaurant records
     cursor.execute("SELECT COUNT(*) FROM food_listings")
     count = cursor.fetchone()[0]
@@ -129,7 +136,7 @@ def seed_data(conn):
         ("Chef Vikram Singhania", "royal@banquet.com", "donor", "Grand Royal Banquet & Caterers", "+91 98111 22334", "Plot 45, Sector 18 Commercial Hub", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&h=120&q=80", 1),
         ("Ananya Desai (Director)", "shelter@hope.org", "receiver", "Hope Community Shelter & Food Bank", "+91 99222 33445", "12-B Old City Road, Near Civil Hospital", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80", 1),
         ("Karthik Verma (Coordinator)", "seva@ngo.org", "receiver", "Seva Youth Volunteer Foundation", "+91 97333 44556", "Sector 9 Community Haven", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&h=120&q=80", 1),
-        ("Dr. K. Venkatesh", "admin@foodwaste.org", "admin", "University Food Safety & Redistribution Board", "+91 90000 11111", "Faculty Center for Sustainable Computing", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&h=120&q=80", 1)
+        ("Dr. Kavin Prasanth", SUPER_ADMIN_EMAIL, "admin", "University Food Safety & Redistribution Board", "+91 99222 33445", "Faculty IT Complex, Admin Block", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80", 1)
     ]
     cursor.executemany('''
         INSERT OR IGNORE INTO users (name, email, role, organization, phone, address, photo_url, is_verified)
