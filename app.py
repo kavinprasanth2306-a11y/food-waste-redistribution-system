@@ -423,16 +423,16 @@ def api_google_sync():
 
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, role, organization FROM users WHERE email = ?", (email,))
+    cursor.execute("SELECT id, role, organization, phone, address, photo_url FROM users WHERE email = ?", (email,))
     user = cursor.fetchone()
 
     if user:
         cursor.execute("UPDATE users SET photo_url = ?, name = ? WHERE email = ?", (photo_url, name, email))
         user_id = user['id']
         assigned_role = user['role']
-        org = user['organization']
-        phone = user['phone'] if 'phone' in user.keys() else '+91 98765 00000'
-        address = user['address'] if 'address' in user.keys() else 'Campus Dining Dock 1'
+        org = user['organization'] or ('Campus Dining Complex' if assigned_role == 'donor' else 'Hope Community Shelter')
+        phone = user['phone'] or '+91 98765 00000'
+        address = user['address'] or 'Campus Dining Dock 1'
     else:
         org = "Campus Dining Complex" if role == 'donor' else "Hope Community Shelter"
         phone = "+91 98765 43210"
