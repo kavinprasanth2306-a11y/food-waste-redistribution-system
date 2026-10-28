@@ -24,11 +24,11 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 DEFAULT_IMAGES = {
-    'Cooked Meal': 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=800&q=80',
-    'Bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
-    'Non-Veg': 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80',
-    'Packaged Goods': 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
-    'Raw Produce': 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80'
+    'Cooked Meal': '/static/images/rice_curry.svg',
+    'Bakery': '/static/images/bakery_bread.svg',
+    'Non-Veg': '/static/images/chicken_biryani.svg',
+    'Packaged Goods': '/static/images/khichdi_dal.svg',
+    'Raw Produce': '/static/images/default_food.svg'
 }
 
 
@@ -160,7 +160,7 @@ def seed_data(conn):
             28.5, 60, "Hot Insulated (>60°C)", r1_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r1_exp.strftime("%Y-%m-%d %H:%M:%S"), "Campus Dining Complex, Loading Dock A",
             "+91 98765 43210 (Mess Supervisor)", "Surplus from lunch rush. Packed in 3 insulated thermal cafs.",
-            "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=800&q=80",
+            "/static/images/rice_curry.svg",
             "Available", None, None, None, None, None
         ),
         (
@@ -169,7 +169,7 @@ def seed_data(conn):
             14.0, 40, "Room Temp / Dry", r2_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r2_exp.strftime("%Y-%m-%d %H:%M:%S"), "Grand Royal Kitchen Bay, Sector 18",
             "+91 98111 22334 (Head Pastry Chef)", "Individually wrapped and tray-sealed. Safe for evening snack distribution.",
-            "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80",
+            "/static/images/bakery_bread.svg",
             "Available", None, None, None, None, None
         ),
         (
@@ -178,7 +178,7 @@ def seed_data(conn):
             35.0, 75, "Hot Insulated (>60°C)", r3_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r3_exp.strftime("%Y-%m-%d %H:%M:%S"), "Grand Royal Banquet Main Entrance, Sector 18",
             "+91 98111 22334 (Banquet Operations Lead)", "Corporate convention lunch excess. Strictly kept above 65°C in chafing dishes.",
-            "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80",
+            "/static/images/chicken_biryani.svg",
             "Available", None, None, None, None, None
         ),
         (
@@ -187,7 +187,7 @@ def seed_data(conn):
             22.0, 50, "Chilled (4°C)", r4_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r4_exp.strftime("%Y-%m-%d %H:%M:%S"), "Campus Dining Complex, Block B Cold Room",
             "+91 98765 43210 (Mr. Rahul)", "Rapidly chilled in clean food-safe bins. Van dispatched.",
-            "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80",
+            "/static/images/khichdi_dal.svg",
             "Claimed", "7842", "Hope Community Shelter & Food Bank", "+91 99222 33445",
             r4_claimed.strftime("%Y-%m-%d %H:%M:%S"), None
         ),
@@ -197,7 +197,7 @@ def seed_data(conn):
             10.0, 20, "Chilled (4°C)", r5_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r5_exp.strftime("%Y-%m-%d %H:%M:%S"), "Grand Royal Banquet Kitchen Gate",
             "+91 98111 22334", "Exceeded safety consumption threshold. Automated safety lockout active.",
-            "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=800&q=80",
+            "/static/images/mushroom_soup.svg",
             "Expired", None, None, None, None, None
         )
     ]

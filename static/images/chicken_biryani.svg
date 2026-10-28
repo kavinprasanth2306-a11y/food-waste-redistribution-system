@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <linearGradient id="biryaniBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4c0519" />
+      <stop offset="50%" stop-color="#881337" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="potGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#b45309" />
+      <stop offset="50%" stop-color="#78350f" />
+      <stop offset="100%" stop-color="#451a03" />
+    </linearGradient>
+    <linearGradient id="riceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="500" fill="url(#biryaniBg)" />
+  <circle cx="400" cy="250" r="190" fill="#f43f5e" opacity="0.15" filter="blur(30px)" />
+
+  <!-- Heat waves -->
+  <path d="M370 120 Q385 80 370 40" stroke="#fecdd3" stroke-width="4" fill="none" opacity="0.4" />
+  <path d="M400 110 Q420 70 400 30" stroke="#fecdd3" stroke-width="4.5" fill="none" opacity="0.55" />
+  <path d="M430 120 Q445 80 430 40" stroke="#fecdd3" stroke-width="4" fill="none" opacity="0.4" />
+
+  <!-- Heavy Handi / Clay Pot Shadow -->
+  <ellipse cx="400" cy="380" rx="210" ry="25" fill="#1e1b4b" opacity="0.4" />
+
+  <!-- Handi Body -->
+  <path d="M220 250 C200 370 600 370 580 250 Z" fill="url(#potGrad)" stroke="#d97706" stroke-width="5" />
+  
+  <!-- Handi Rim -->
+  <ellipse cx="400" cy="245" rx="190" ry="60" fill="url(#potGrad)" stroke="#f59e0b" stroke-width="4" />
+  <ellipse cx="400" cy="240" rx="175" ry="50" fill="#292524" />
+
+  <!-- Spiced Saffron Dum Rice -->
+  <ellipse cx="400" cy="235" rx="165" ry="46" fill="url(#riceGrad)" />
+
+  <!-- Chicken piece / Drumstick illustration -->
+  <ellipse cx="410" cy="225" rx="55" ry="24" fill="#9a3412" transform="rotate(-15 410 225)" />
+  <ellipse cx="465" cy="210" rx="15" ry="8" fill="#ffedd5" transform="rotate(-15 465 210)" />
+
+  <!-- Fried Onions (Birista) & Mint Spices -->
+  <path d="M320 220 Q340 215 360 225" stroke="#78350f" stroke-width="4" stroke-linecap="round" />
+  <path d="M360 235 Q380 228 400 240" stroke="#78350f" stroke-width="4" stroke-linecap="round" />
+  <circle cx="350" cy="225" r="7" fill="#10b981" />
+  <circle cx="370" cy="240" r="6" fill="#047857" />
+  <circle cx="440" cy="240" r="7" fill="#e11d48" />
+
+  <text x="400" y="440" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="24" fill="#ffe4e6" letter-spacing="1">Hyderabadi Chicken Dum Biryani</text>
+  <text x="400" y="468" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="500" font-size="13" fill="#fda4af" opacity="0.9">THERMAL CAFS &bull; NON-VEGETARIAN &bull; HOT (>60&deg;C)</text>
+</svg>

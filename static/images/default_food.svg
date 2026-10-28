@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <linearGradient id="defBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#047857" />
+      <stop offset="50%" stop-color="#065f46" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#defBg)" />
+  <circle cx="400" cy="240" r="160" fill="#10b981" opacity="0.15" />
+  
+  <g transform="translate(350, 170) scale(4)" stroke="#ecfdf5" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+  </g>
+
+  <text x="400" y="380" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="26" fill="#ecfdf5">Edible Surplus Food Rescue</text>
+  <text x="400" y="415" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="500" font-size="14" fill="#a7f3d0">CAMPUS &amp; RESTAURANT REDISTRIBUTION</text>
+</svg>

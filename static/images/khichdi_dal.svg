@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <linearGradient id="khichdiBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14532d" />
+      <stop offset="50%" stop-color="#15803d" />
+      <stop offset="100%" stop-color="#022c22" />
+    </linearGradient>
+    <linearGradient id="brassBowl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="60%" stop-color="#ca8a04" />
+      <stop offset="100%" stop-color="#854d0e" />
+    </linearGradient>
+    <linearGradient id="khichdiFill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#ca8a04" />
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="500" fill="url(#khichdiBg)" />
+  <circle cx="400" cy="240" r="180" fill="#22c55e" opacity="0.15" filter="blur(30px)" />
+
+  <!-- Shadow -->
+  <ellipse cx="400" cy="360" rx="210" ry="22" fill="#052e16" opacity="0.5" />
+
+  <!-- Brass Handi / Bowl -->
+  <path d="M220 230 C200 350 600 350 580 230 Z" fill="url(#brassBowl)" stroke="#eab308" stroke-width="4" />
+  <ellipse cx="400" cy="225" rx="190" ry="55" fill="url(#brassBowl)" stroke="#facc15" stroke-width="3" />
+  <ellipse cx="400" cy="220" rx="175" ry="46" fill="#1c1917" />
+
+  <!-- Golden Khichdi & Dal Fill -->
+  <ellipse cx="400" cy="216" rx="166" ry="42" fill="url(#khichdiFill)" />
+
+  <!-- Ghee & Cumin Tadka Pool -->
+  <ellipse cx="400" cy="215" rx="95" ry="24" fill="#facc15" opacity="0.75" />
+  <path d="M370 210 Q385 208 395 214" stroke="#78350f" stroke-width="3" stroke-linecap="round" />
+  <path d="M410 216 Q425 212 435 218" stroke="#78350f" stroke-width="3" stroke-linecap="round" />
+  <path d="M385 220 Q395 224 415 222" stroke="#78350f" stroke-width="3" stroke-linecap="round" />
+
+  <!-- Fresh Coriander & Red Chili Tadka -->
+  <circle cx="370" cy="215" r="5" fill="#15803d" />
+  <circle cx="430" cy="212" r="6" fill="#16a34a" />
+  <path d="M410 210 Q425 205 428 218" stroke="#dc2626" stroke-width="4" stroke-linecap="round" />
+
+  <text x="400" y="435" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="24" fill="#fef9c3" letter-spacing="1">Vegetable Khichdi &amp; Tadka Dal</text>
+  <text x="400" y="465" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="500" font-size="13" fill="#bbf7d0" opacity="0.9">NUTRITIOUS MESS SURPLUS &bull; PURE VEGETARIAN</text>
+</svg>

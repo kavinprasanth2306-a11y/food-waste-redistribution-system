@@ -69,6 +69,14 @@
 
         // Expose Firebase Auth methods to Alpine global window
         window.firebaseLoginWithGoogle = async function() {
+            // Firebase Auth permits 'localhost', but blocks '127.0.0.1' by default
+            if (window.location.hostname === '127.0.0.1') {
+                window.dispatchEvent(new CustomEvent('open-auth-help-modal', {
+                    detail: { reason: 'hostname_127' }
+                }));
+                return;
+            }
+
             try {
                 const result = await signInWithPopup(auth, provider);
                 const user = result.user;
@@ -99,7 +107,13 @@
                 }));
             } catch (err) {
                 console.error("Google Auth Error:", err);
-                alert("Google Sign-In note: " + err.message);
+                if (err.code === 'auth/unauthorized-domain') {
+                    window.dispatchEvent(new CustomEvent('open-auth-help-modal', {
+                        detail: { reason: 'unauthorized_domain' }
+                    }));
+                } else if (err.code !== 'auth/popup-closed-by-user') {
+                    alert("Google Sign-In note: " + err.message);
+                }
             }
         };
 
@@ -456,9 +470,10 @@
                         
                         <div>
                             <!-- PROMINENT FOOD IMAGE (CLICKABLE WITH OVERLAYS) -->
-                            <div class="relative h-48 w-full overflow-hidden bg-slate-100">
+                            <div class="relative h-48 w-full overflow-hidden bg-slate-900">
                                 <img :src="item.image_url" 
-                                     :alt="item.item_name" 
+                                     alt="Food Lot" 
+                                     @error="handleImageError($event, item)"
                                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                                 
                                 <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-black/20"></div>
@@ -610,7 +625,7 @@
                             <template x-for="item in listings" :key="item.id">
                                 <tr class="hover:bg-white/60 transition-colors">
                                     <td class="py-2 px-3">
-                                        <img :src="item.image_url" class="w-10 h-10 rounded-lg object-cover border border-slate-200">
+                                        <img :src="item.image_url" alt="" @error="handleImageError($event, item)" class="w-10 h-10 rounded-lg object-cover border border-slate-200">
                                     </td>
                                     <td class="py-3 px-3 font-mono text-slate-400" x-text="'#' + item.id"></td>
                                     <td class="py-3 px-3 font-semibold text-slate-900" x-text="item.item_name"></td>
@@ -667,7 +682,8 @@
                         <!-- Hero Image Header with Gradient -->
                         <div class="relative h-64 w-full bg-slate-900">
                             <img :src="inspectedItem.image_url" 
-                                 :alt="inspectedItem.item_name" 
+                                 alt="Food Lot" 
+                                 @error="handleImageError($event, inspectedItem)"
                                  class="w-full h-full object-cover">
                             
                             <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
@@ -979,6 +995,62 @@
             </div>
         </div>
 
+        <!-- ============================================================== -->
+        <!-- MODAL: GOOGLE AUTH DOMAIN ASSISTANT MODAL                      -->
+        <!-- ============================================================== -->
+        <div x-show="openAuthHelpModal" 
+             x-cloak
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md"
+             @keydown.escape.window="openAuthHelpModal = false">
+            
+            <div class="glass-panel rounded-3xl p-6 sm:p-7 max-w-md w-full border border-white/90 shadow-2xl relative"
+                 @click.outside="openAuthHelpModal = false">
+                
+                <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200">
+                            <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 tracking-tight">Firebase Domain Authorization</h3>
+                            <p class="text-[10px] text-slate-500">Google OAuth Domain Whitelist Fix</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="openAuthHelpModal = false" class="text-slate-400 hover:text-slate-700">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-3.5 text-xs text-slate-600">
+                    <p>
+                        Firebase Authentication permits <strong class="text-slate-800">localhost</strong> by default, but blocks <strong class="text-rose-600">127.0.0.1</strong> until it is explicitly added in the Firebase Console.
+                    </p>
+
+                    <!-- Option 1: 1-Click Switch to localhost:5000 -->
+                    <button type="button" @click="switchDomainToLocalhost()"
+                            class="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                        <span>Switch to http://localhost:5000 (Recommended)</span>
+                    </button>
+
+                    <!-- Option 2: 1-Click Simulated Google Sign-In -->
+                    <button type="button" @click="simulateGoogleUser()"
+                            class="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="user-check" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Continue with Demo Google Account</span>
+                    </button>
+
+                    <!-- Firebase Manual Whitelist Instructions -->
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 space-y-1">
+                        <strong class="text-slate-700">To allow 127.0.0.1 permanently:</strong>
+                        <div>1. Open <span class="font-mono text-slate-700">Firebase Console &gt; Authentication &gt; Settings</span></div>
+                        <div>2. Click <span class="font-mono text-slate-700">Authorized Domains</span> &gt; Add <code class="text-emerald-700 bg-white px-1 py-0.5 rounded border">127.0.0.1</code></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
         <!-- TOAST FEEDBACK -->
         <div x-show="toast.show" 
              x-cloak
@@ -1000,6 +1072,7 @@
                 openDonateModal: false,
                 openClaimModal: false,
                 openDetails: false,
+                openAuthHelpModal: false,
                 inspectedItem: null,
                 targetItem: null,
                 currentUser: null,
@@ -1035,8 +1108,34 @@
 
                 initApp() {
                     window.activeRole = this.currentRole;
+                    window.addEventListener('open-auth-help-modal', () => {
+                        this.openAuthHelpModal = true;
+                        this.$nextTick(() => lucide.createIcons());
+                    });
                     this.fetchListings();
                     this.$nextTick(() => lucide.createIcons());
+                },
+
+                switchDomainToLocalhost() {
+                    window.location.href = window.location.href.replace('127.0.0.1', 'localhost');
+                },
+
+                simulateGoogleUser() {
+                    this.handleAuthUpdate({
+                        loggedIn: true,
+                        user: {
+                            displayName: 'Dr. Kavin Prasanth',
+                            email: 'kavinprasanth2306@gmail.com',
+                            photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80',
+                            role: this.currentRole
+                        }
+                    });
+                    this.openAuthHelpModal = false;
+                },
+
+                handleImageError(event, item) {
+                    event.target.onerror = null;
+                    event.target.src = '/static/images/default_food.svg';
                 },
 
                 loginWithGoogle() {
