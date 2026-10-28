@@ -11,6 +11,7 @@ __pycache__/
 # SQLite Database & Instance
 instance/
 *.db
+*.db-journal
 *.sqlite3
 
 # OS / Editor files
