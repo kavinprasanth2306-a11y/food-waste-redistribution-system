@@ -2,21 +2,42 @@
 Smart Food Waste Management & Redistribution Platform
 Academic Evaluation (IA3) Micro-Project
 Backend: Flask 3.1 + SQLite (Auto-seeding food_redistribution.db)
+Features: Firebase Google Auth Sync, Image Upload / URL support, Real-Time Expiry
 """
 
 import os
 import random
 import sqlite3
+import time
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ia3-light-glassmorphic-eco-rescue-2026'
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'food_redistribution.db')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'food_redistribution.db')
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+DEFAULT_IMAGES = {
+    'Cooked Meal': 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=800&q=80',
+    'Bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
+    'Non-Veg': 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80',
+    'Packaged Goods': 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
+    'Raw Produce': 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80'
+}
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 # ============================================================================
-# DATABASE UTILITIES & SEEDER
+# DATABASE UTILITIES & AUTO-SEEDER
 # ============================================================================
 
 def get_db():
@@ -39,12 +60,13 @@ def init_db():
             organization TEXT NOT NULL,
             phone TEXT NOT NULL,
             address TEXT,
+            photo_url TEXT,
             is_verified INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
-    # Food Listings Table
+    # Food Listings Table with image_url column
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS food_listings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,6 +83,7 @@ def init_db():
             pickup_address TEXT NOT NULL,
             pickup_contact TEXT NOT NULL,
             notes TEXT,
+            image_url TEXT,
             status TEXT DEFAULT 'Available', -- 'Available', 'Claimed', 'Completed', 'Expired'
             claim_pin TEXT,
             claimed_by_org TEXT,
@@ -72,6 +95,20 @@ def init_db():
         )
     ''')
     conn.commit()
+
+    # Migration check: Ensure photo_url column exists in older sqlite tables
+    cursor.execute("PRAGMA table_info(users)")
+    user_cols = [col[1] for col in cursor.fetchall()]
+    if 'photo_url' not in user_cols:
+        cursor.execute("ALTER TABLE users ADD COLUMN photo_url TEXT")
+        conn.commit()
+
+    # Migration check: Ensure image_url column exists in older sqlite tables
+    cursor.execute("PRAGMA table_info(food_listings)")
+    cols = [col[1] for col in cursor.fetchall()]
+    if 'image_url' not in cols:
+        cursor.execute("ALTER TABLE food_listings ADD COLUMN image_url TEXT")
+        conn.commit()
 
     # Check if data exists; if not, seed realistic Indian campus/restaurant records
     cursor.execute("SELECT COUNT(*) FROM food_listings")
@@ -88,36 +125,31 @@ def seed_data(conn):
 
     # 1. Seed Personas / Users
     users = [
-        ("Rahul Sharma (Mess Manager)", "donor@campus.edu", "donor", "Campus Central Mess (Hostel Block A)", "+91 98765 43210", "Campus Dining Complex, North Gate 2", 1),
-        ("Chef Vikram Singhania", "royal@banquet.com", "donor", "Grand Royal Banquet & Caterers", "+91 98111 22334", "Plot 45, Sector 18 Commercial Hub", 1),
-        ("Ananya Desai (Director)", "shelter@hope.org", "receiver", "Hope Community Shelter & Food Bank", "+91 99222 33445", "12-B Old City Road, Near Civil Hospital", 1),
-        ("Karthik Verma (Coordinator)", "seva@ngo.org", "receiver", "Seva Youth Volunteer Foundation", "+91 97333 44556", "Sector 9 Community Haven", 1),
-        ("Dr. K. Venkatesh", "admin@foodwaste.org", "admin", "University Food Safety & Redistribution Board", "+91 90000 11111", "Faculty Center for Sustainable Computing", 1)
+        ("Rahul Sharma (Mess Manager)", "donor@campus.edu", "donor", "Campus Central Mess (Hostel Block A)", "+91 98765 43210", "Campus Dining Complex, North Gate 2", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80", 1),
+        ("Chef Vikram Singhania", "royal@banquet.com", "donor", "Grand Royal Banquet & Caterers", "+91 98111 22334", "Plot 45, Sector 18 Commercial Hub", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&h=120&q=80", 1),
+        ("Ananya Desai (Director)", "shelter@hope.org", "receiver", "Hope Community Shelter & Food Bank", "+91 99222 33445", "12-B Old City Road, Near Civil Hospital", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80", 1),
+        ("Karthik Verma (Coordinator)", "seva@ngo.org", "receiver", "Seva Youth Volunteer Foundation", "+91 97333 44556", "Sector 9 Community Haven", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&h=120&q=80", 1),
+        ("Dr. K. Venkatesh", "admin@foodwaste.org", "admin", "University Food Safety & Redistribution Board", "+91 90000 11111", "Faculty Center for Sustainable Computing", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&h=120&q=80", 1)
     ]
     cursor.executemany('''
-        INSERT OR IGNORE INTO users (name, email, role, organization, phone, address, is_verified)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT OR IGNORE INTO users (name, email, role, organization, phone, address, photo_url, is_verified)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ''', users)
 
-    # 2. Seed 5 Realistic Indian Campus/Restaurant Food Listings
-    # Record 1: Active, High Urgency (< 2 hours remaining)
+    # 2. Seed 5 Realistic Indian Campus/Restaurant Food Listings with High-Res Photos
     r1_exp = now + timedelta(hours=1, minutes=35)
     r1_prep = now - timedelta(hours=2)
 
-    # Record 2: Active, Safe Window (~5.5 hours remaining)
     r2_exp = now + timedelta(hours=5, minutes=30)
     r2_prep = now - timedelta(hours=3)
 
-    # Record 3: Active, Non-Veg Event Surplus (~3.5 hours remaining)
     r3_exp = now + timedelta(hours=3, minutes=30)
     r3_prep = now - timedelta(hours=1, minutes=30)
 
-    # Record 4: Claimed by NGO, In Transit with 4-digit Handover PIN
     r4_exp = now + timedelta(hours=4)
     r4_prep = now - timedelta(hours=4)
     r4_claimed = now - timedelta(minutes=25)
 
-    # Record 5: Expired (Demonstrates Automated Safety Lockout)
     r5_exp = now - timedelta(hours=2)
     r5_prep = now - timedelta(hours=14)
 
@@ -128,6 +160,7 @@ def seed_data(conn):
             28.5, 60, "Hot Insulated (>60°C)", r1_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r1_exp.strftime("%Y-%m-%d %H:%M:%S"), "Campus Dining Complex, Loading Dock A",
             "+91 98765 43210 (Mess Supervisor)", "Surplus from lunch rush. Packed in 3 insulated thermal cafs.",
+            "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=800&q=80",
             "Available", None, None, None, None, None
         ),
         (
@@ -136,6 +169,7 @@ def seed_data(conn):
             14.0, 40, "Room Temp / Dry", r2_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r2_exp.strftime("%Y-%m-%d %H:%M:%S"), "Grand Royal Kitchen Bay, Sector 18",
             "+91 98111 22334 (Head Pastry Chef)", "Individually wrapped and tray-sealed. Safe for evening snack distribution.",
+            "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80",
             "Available", None, None, None, None, None
         ),
         (
@@ -144,6 +178,7 @@ def seed_data(conn):
             35.0, 75, "Hot Insulated (>60°C)", r3_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r3_exp.strftime("%Y-%m-%d %H:%M:%S"), "Grand Royal Banquet Main Entrance, Sector 18",
             "+91 98111 22334 (Banquet Operations Lead)", "Corporate convention lunch excess. Strictly kept above 65°C in chafing dishes.",
+            "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80",
             "Available", None, None, None, None, None
         ),
         (
@@ -152,6 +187,7 @@ def seed_data(conn):
             22.0, 50, "Chilled (4°C)", r4_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r4_exp.strftime("%Y-%m-%d %H:%M:%S"), "Campus Dining Complex, Block B Cold Room",
             "+91 98765 43210 (Mr. Rahul)", "Rapidly chilled in clean food-safe bins. Van dispatched.",
+            "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80",
             "Claimed", "7842", "Hope Community Shelter & Food Bank", "+91 99222 33445",
             r4_claimed.strftime("%Y-%m-%d %H:%M:%S"), None
         ),
@@ -161,6 +197,7 @@ def seed_data(conn):
             10.0, 20, "Chilled (4°C)", r5_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r5_exp.strftime("%Y-%m-%d %H:%M:%S"), "Grand Royal Banquet Kitchen Gate",
             "+91 98111 22334", "Exceeded safety consumption threshold. Automated safety lockout active.",
+            "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=800&q=80",
             "Expired", None, None, None, None, None
         )
     ]
@@ -169,10 +206,10 @@ def seed_data(conn):
         INSERT INTO food_listings (
             donor_id, item_name, donor_org, category, dietary_type,
             quantity_kg, servings_estimate, storage_condition, prepared_at,
-            expires_at, pickup_address, pickup_contact, notes,
+            expires_at, pickup_address, pickup_contact, notes, image_url,
             status, claim_pin, claimed_by_org, claimed_by_contact,
             claimed_at, completed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', listings)
     conn.commit()
 
@@ -185,7 +222,6 @@ def format_listing_row(row):
     d = dict(row)
     now = datetime.now()
 
-    # Parse expiration
     try:
         exp = datetime.strptime(d['expires_at'], "%Y-%m-%d %H:%M:%S")
     except Exception:
@@ -197,6 +233,13 @@ def format_listing_row(row):
     # Dynamic status enforcement
     if d['status'] == 'Available' and remaining_seconds <= 0:
         d['status'] = 'Expired'
+
+    # Fallback image if missing
+    if not d.get('image_url'):
+        if d.get('dietary_type') == 'Non-Veg':
+            d['image_url'] = DEFAULT_IMAGES['Non-Veg']
+        else:
+            d['image_url'] = DEFAULT_IMAGES.get(d.get('category'), DEFAULT_IMAGES['Cooked Meal'])
 
     # Urgency level categorization
     if d['status'] == 'Expired' or remaining_seconds <= 0:
@@ -272,7 +315,6 @@ def index():
 
     listings = [format_listing_row(r) for r in rows]
 
-    # Sort available items by remaining time ascending (closest to expiry first)
     def sort_order(x):
         if x['status'] == 'Available':
             return (0, x['time_remaining_seconds'])
@@ -282,7 +324,6 @@ def index():
             return (2, -x['id'])
 
     listings.sort(key=sort_order)
-
     return render_template('index.html', listings=listings, metrics=metrics)
 
 
@@ -304,8 +345,23 @@ def api_metrics():
 
 @app.route('/api/listings', methods=['POST'])
 def api_add_listing():
-    """Create a new surplus food donation from the modal."""
-    data = request.form if request.form else (request.get_json() or {})
+    """Create a new surplus food donation from the modal with image upload or URL support."""
+    # Handle multipart form data or json
+    if request.is_json:
+        data = request.get_json() or {}
+        image_url = data.get('image_url', '').strip()
+    else:
+        data = request.form
+        image_url = data.get('image_url', '').strip()
+        
+        # Check if an actual file was uploaded
+        if 'image_file' in request.files:
+            file = request.files['image_file']
+            if file and file.filename and allowed_file(file.filename):
+                safe_name = f"{int(time.time())}_{secure_filename(file.filename)}"
+                file_dest = os.path.join(app.config['UPLOAD_FOLDER'], safe_name)
+                file.save(file_dest)
+                image_url = f"/static/uploads/{safe_name}"
 
     item_name = data.get('item_name', '').strip()
     donor_org = data.get('donor_org', 'Campus Central Mess (Hostel A)').strip()
@@ -322,6 +378,13 @@ def api_add_listing():
     if not item_name or quantity_kg <= 0 or expiry_hours <= 0:
         return jsonify({'success': False, 'message': 'Please provide a valid item name, positive quantity, and expiry window.'}), 400
 
+    # Auto fallback image if none provided
+    if not image_url:
+        if dietary_type == 'Non-Veg':
+            image_url = DEFAULT_IMAGES['Non-Veg']
+        else:
+            image_url = DEFAULT_IMAGES.get(category, DEFAULT_IMAGES['Cooked Meal'])
+
     now = datetime.now()
     prepared_at = now.strftime("%Y-%m-%d %H:%M:%S")
     expires_at = (now + timedelta(hours=expiry_hours)).strftime("%Y-%m-%d %H:%M:%S")
@@ -332,17 +395,64 @@ def api_add_listing():
         INSERT INTO food_listings (
             donor_id, item_name, donor_org, category, dietary_type,
             quantity_kg, servings_estimate, storage_condition, prepared_at,
-            expires_at, pickup_address, pickup_contact, notes, status
-        ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Available')
-    ''', (item_name, donor_org, category, dietary_type, quantity_kg, servings_estimate, storage_condition, prepared_at, expires_at, pickup_address, pickup_contact, notes))
+            expires_at, pickup_address, pickup_contact, notes, image_url, status
+        ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Available')
+    ''', (item_name, donor_org, category, dietary_type, quantity_kg, servings_estimate, storage_condition, prepared_at, expires_at, pickup_address, pickup_contact, notes, image_url))
     conn.commit()
     new_id = cursor.lastrowid
     conn.close()
 
     return jsonify({
         'success': True,
-        'message': f"Food lot '{item_name}' successfully broadcast to local NGO network!",
+        'message': f"Food lot '{item_name}' broadcast to local shelter network with photo verified!",
         'listing_id': new_id
+    })
+
+
+@app.route('/api/auth/google-sync', methods=['POST'])
+def api_google_sync():
+    """Sync authenticated Google User with the SQLite Users table."""
+    data = request.get_json() or {}
+    email = data.get('email', '').strip()
+    name = data.get('displayName', 'Google User').strip()
+    photo_url = data.get('photoURL', '')
+    role = data.get('role', 'receiver')
+
+    if not email:
+        return jsonify({'success': False, 'message': 'Valid Google email is required.'}), 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, role, organization FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+
+    if user:
+        cursor.execute("UPDATE users SET photo_url = ?, name = ? WHERE email = ?", (photo_url, name, email))
+        user_id = user['id']
+        assigned_role = user['role']
+        org = user['organization']
+    else:
+        org = "Google Verified Entity" if role == 'donor' else "Community Volunteer Shelter"
+        cursor.execute('''
+            INSERT INTO users (name, email, role, organization, phone, address, photo_url, is_verified)
+            VALUES (?, ?, ?, ?, '+91 98000 00000', 'Verified Campus / City Hub', ?, 1)
+        ''', (name, email, role, org, photo_url))
+        user_id = cursor.lastrowid
+        assigned_role = role
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'user': {
+            'id': user_id,
+            'name': name,
+            'email': email,
+            'role': assigned_role,
+            'organization': org,
+            'photo_url': photo_url
+        }
     })
 
 
@@ -459,6 +569,8 @@ if __name__ == '__main__':
     print("\n" + "="*70)
     print("🌿 Smart Food Waste Management & Redistribution Platform (IA3)")
     print("⚡ Design System: Ultra-Clean Light Glassmorphism")
+    print("🔥 Firebase Google Authentication Enabled")
+    print("📸 Rich Image Gallery & Inspect Modal Enabled")
     print("🌐 Running locally at: http://127.0.0.1:5000")
     print("="*70 + "\n")
     app.run(debug=True, port=5000)

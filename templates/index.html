@@ -48,11 +48,92 @@
     <!-- Alpine.js for lightweight, reactive state management -->
     <script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
 
+    <!-- Firebase SDK (Modular CDN) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDtum5H8awAjHiOzDl3BOnSS7ANEkreOZU",
+            authDomain: "chat-app-bacfb.firebaseapp.com",
+            projectId: "chat-app-bacfb",
+            storageBucket: "chat-app-bacfb.firebasestorage.app",
+            messagingSenderId: "783991096982",
+            appId: "1:783991096982:web:2b7327c55e84c5546224b7",
+            measurementId: "G-7Q6XD6219E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // Expose Firebase Auth methods to Alpine global window
+        window.firebaseLoginWithGoogle = async function() {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                
+                // Sync with Flask backend
+                const syncRes = await fetch('/api/auth/google-sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: user.email,
+                        displayName: user.displayName || 'Google User',
+                        photoURL: user.photoURL || '',
+                        role: window.activeRole || 'receiver'
+                    })
+                });
+                const syncData = await syncRes.json();
+                
+                window.dispatchEvent(new CustomEvent('auth-changed', { 
+                    detail: { 
+                        loggedIn: true, 
+                        user: {
+                            displayName: user.displayName,
+                            email: user.email,
+                            photoURL: user.photoURL,
+                            role: syncData.user ? syncData.user.role : 'receiver'
+                        } 
+                    } 
+                }));
+            } catch (err) {
+                console.error("Google Auth Error:", err);
+                alert("Google Sign-In note: " + err.message);
+            }
+        };
+
+        window.firebaseSignOut = async function() {
+            try {
+                await signOut(auth);
+                window.dispatchEvent(new CustomEvent('auth-changed', { 
+                    detail: { loggedIn: false, user: null } 
+                }));
+            } catch (err) {
+                console.error("Sign Out Error:", err);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.dispatchEvent(new CustomEvent('auth-changed', { 
+                    detail: { 
+                        loggedIn: true, 
+                        user: {
+                            displayName: user.displayName,
+                            email: user.email,
+                            photoURL: user.photoURL
+                        } 
+                    } 
+                }));
+            }
+        });
+    </script>
+
     <style>
-        /* Ambient Light Glassmorphism Foundations */
         :root {
             --bg-base: #f8fafc;
-            --glass-bg: rgba(255, 255, 255, 0.76);
+            --glass-bg: rgba(255, 255, 255, 0.78);
             --glass-border: rgba(255, 255, 255, 0.90);
             --outer-ring: rgba(226, 232, 240, 0.65);
         }
@@ -65,49 +146,47 @@
             overflow-x: hidden;
         }
 
-        /* Fixed ambient refraction orbs */
         .ambient-orb {
             position: fixed;
             border-radius: 9999px;
-            filter: blur(110px);
+            filter: blur(120px);
             pointer-events: none;
             z-index: 0;
             opacity: 0.65;
         }
         .orb-mint {
             top: -10%;
-            left: 12%;
-            width: 480px;
-            height: 480px;
-            background: #dcfce7; /* Soft mint */
+            left: 10%;
+            width: 500px;
+            height: 500px;
+            background: #dcfce7;
         }
         .orb-sky {
             top: 25%;
-            right: 8%;
-            width: 520px;
-            height: 520px;
-            background: #e0f2fe; /* Pale sky */
+            right: 5%;
+            width: 550px;
+            height: 550px;
+            background: #e0f2fe;
         }
         .orb-peach {
             bottom: -5%;
-            left: 30%;
-            width: 450px;
-            height: 450px;
-            background: #fef3c7; /* Pale amber warmth */
-            opacity: 0.4;
+            left: 25%;
+            width: 480px;
+            height: 480px;
+            background: #fef3c7;
+            opacity: 0.45;
         }
 
-        /* Tactile Frosted Glass Utility Classes */
         .glass-panel {
             background: var(--glass-bg);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.03), 0 0 0 1px var(--outer-ring);
         }
 
         .glass-card {
-            background: rgba(255, 255, 255, 0.72);
+            background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
             border: 1px solid rgba(255, 255, 255, 0.88);
@@ -116,17 +195,15 @@
         }
 
         .glass-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 14px 34px -4px rgba(15, 23, 42, 0.07), 0 0 0 1px rgba(16, 185, 129, 0.3);
-            background: rgba(255, 255, 255, 0.85);
+            transform: translateY(-3px);
+            box-shadow: 0 14px 34px -4px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(16, 185, 129, 0.35);
+            background: rgba(255, 255, 255, 0.90);
         }
 
-        /* Tabular figures for aligned timer counts */
         .tabular-nums {
             font-variant-numeric: tabular-nums;
         }
 
-        /* Custom soft scrollbar */
         ::-webkit-scrollbar {
             width: 7px;
             height: 7px;
@@ -138,91 +215,107 @@
             background: #cbd5e1;
             border-radius: 9999px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
     </style>
 </head>
 <body class="relative min-h-screen text-slate-700" 
       x-data="foodApp()" 
-      x-init="initApp()">
+      x-init="initApp()"
+      @auth-changed.window="handleAuthUpdate($event.detail)">
 
-    <!-- Fixed Ambient Pastel Refraction Orbs -->
+    <!-- Ambient Pastel Refraction Orbs -->
     <div class="ambient-orb orb-mint"></div>
     <div class="ambient-orb orb-sky"></div>
     <div class="ambient-orb orb-peach"></div>
 
-    <!-- MAIN SHELL (Z-Index above blurred orbs) -->
     <div class="relative z-10 flex flex-col min-h-screen">
 
-        <!-- 1. STICKY FROSTED TOP NAVIGATION & DEMO ROLE SWITCHER -->
-        <header class="sticky top-0 z-40 glass-panel border-b border-white/60">
+        <!-- 1. STICKY FROSTED HEADER & GOOGLE AUTH BAR -->
+        <header class="sticky top-0 z-40 glass-panel border-b border-white/70">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-16 gap-4">
+                <div class="flex items-center justify-between h-16 gap-3">
                     
                     <!-- Brand Identity -->
-                    <div class="flex items-center space-x-3 shrink-0">
+                    <div class="flex items-center space-x-2.5 shrink-0">
                         <div class="w-9 h-9 rounded-xl bg-emerald-600/10 border border-emerald-600/20 text-emerald-700 flex items-center justify-center shadow-sm">
                             <i data-lucide="leaf" class="w-5 h-5"></i>
                         </div>
                         <div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-slate-900 tracking-tight text-base sm:text-lg">EcoRescue</span>
-                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                                    IA3 Micro-Project
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-extrabold text-slate-900 tracking-tight text-base sm:text-lg">EcoRescue</span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    IA3 Live
                                 </span>
                             </div>
-                            <p class="text-[11px] text-slate-500 hidden sm:block">Campus & Restaurant Surplus Redistribution</p>
+                            <p class="text-[10px] text-slate-500 hidden sm:block">Smart Redistribution & Carbon Prevention</p>
                         </div>
                     </div>
 
-                    <!-- Role Switcher (Utility-First, Tactile, No reloads) -->
-                    <div class="flex items-center bg-slate-100/80 p-1 rounded-xl border border-slate-200/80 shadow-inner">
-                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2 hidden md:inline">
-                            Role:
-                        </span>
-                        
-                        <!-- Donor Role -->
-                        <button type="button" 
-                                @click="switchRole('donor')"
+                    <!-- Role Switcher -->
+                    <div class="flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 shadow-inner">
+                        <button type="button" @click="switchRole('donor')"
                                 :class="currentRole === 'donor' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'"
                                 class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all">
                             <i data-lucide="chef-hat" class="w-3.5 h-3.5 text-amber-600"></i>
-                            <span class="hidden sm:inline">Mess Donor</span>
+                            <span class="hidden md:inline">Mess Donor</span>
                         </button>
 
-                        <!-- Receiver / NGO Role -->
-                        <button type="button" 
-                                @click="switchRole('receiver')"
+                        <button type="button" @click="switchRole('receiver')"
                                 :class="currentRole === 'receiver' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'"
                                 class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all">
                             <i data-lucide="heart-handshake" class="w-3.5 h-3.5 text-emerald-600"></i>
-                            <span class="hidden sm:inline">Shelter NGO</span>
+                            <span class="hidden md:inline">Shelter NGO</span>
                         </button>
 
-                        <!-- Admin Role -->
-                        <button type="button" 
-                                @click="switchRole('admin')"
+                        <button type="button" @click="switchRole('admin')"
                                 :class="currentRole === 'admin' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'"
                                 class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all">
                             <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600"></i>
-                            <span class="hidden sm:inline">Admin Audit</span>
+                            <span class="hidden md:inline">Admin Audit</span>
                         </button>
                     </div>
 
-                    <!-- Action Area -->
+                    <!-- Actions & Google Auth Area -->
                     <div class="flex items-center space-x-2.5 shrink-0">
-                        <button type="button" 
-                                @click="openDonateModal = true"
-                                class="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all active:scale-95">
+                        
+                        <!-- CTA: Log Food -->
+                        <button type="button" @click="openDonateModal = true"
+                                class="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all active:scale-95">
                             <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                            <span>Log Surplus Food</span>
+                            <span class="hidden sm:inline">Log Surplus Food</span>
                         </button>
 
-                        <button type="button" 
-                                @click="resetToSampleData()"
-                                title="Reset test data for viva" 
-                                class="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-white/60 border border-slate-200/60 transition-colors">
+                        <!-- Google Auth Button (If not signed in) -->
+                        <template x-if="!currentUser">
+                            <button type="button" @click="loginWithGoogle()"
+                                    class="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs shadow-sm transition-all">
+                                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                                </svg>
+                                <span class="hidden md:inline">Continue with Google</span>
+                            </button>
+                        </template>
+
+                        <!-- Google User Profile (If signed in) -->
+                        <template x-if="currentUser">
+                            <div class="flex items-center space-x-2 bg-white/90 border border-slate-200/90 rounded-xl px-2.5 py-1.5 shadow-sm">
+                                <img :src="currentUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&h=80&q=80'" 
+                                     alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-emerald-500/40">
+                                <div class="hidden lg:block text-left text-xs leading-none">
+                                    <div class="font-bold text-slate-800" x-text="currentUser.displayName ? currentUser.displayName.split(' ')[0] : 'User'"></div>
+                                    <div class="text-[9px] text-emerald-600 font-medium">Google Verified</div>
+                                </div>
+                                <button type="button" @click="logoutGoogle()" title="Sign Out" class="text-slate-400 hover:text-rose-600 pl-1">
+                                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </template>
+
+                        <!-- Demo Reset -->
+                        <button type="button" @click="resetToSampleData()" title="Reset database for viva demo" 
+                                class="p-2 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-white border border-slate-200/60 transition-colors">
                             <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -231,271 +324,259 @@
             </div>
         </header>
 
-        <!-- 2. WORKSPACE CONTENT CONTAINER -->
+        <!-- 2. MAIN WORKSPACE -->
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full space-y-6">
 
-            <!-- Active Persona Banner (Contextual Helper for Evaluator) -->
-            <div class="flex items-center justify-between text-xs px-4 py-2.5 rounded-xl glass-panel border border-slate-200/70 text-slate-600">
+            <!-- Context Banner -->
+            <div class="flex items-center justify-between text-xs px-4 py-2.5 rounded-2xl glass-panel border border-slate-200/80 text-slate-600">
                 <div class="flex items-center space-x-2">
                     <span class="w-2 h-2 rounded-full" 
                           :class="currentRole === 'donor' ? 'bg-amber-500' : (currentRole === 'receiver' ? 'bg-emerald-500' : 'bg-blue-500')"></span>
-                    <span class="font-medium">Active Evaluation Persona:</span>
-                    <strong class="text-slate-900 capitalize" x-text="currentRole === 'donor' ? 'Campus Mess / Dining Hall Manager' : (currentRole === 'receiver' ? 'Hope Community Shelter (Verified NGO)' : 'Faculty Platform Administrator')"></strong>
+                    <span class="font-medium">Active Evaluation Mode:</span>
+                    <strong class="text-slate-900" x-text="currentRole === 'donor' ? 'Campus Mess / Dining Hall Manager (Donor)' : (currentRole === 'receiver' ? 'Hope Community Shelter (Receiver / NGO)' : 'Faculty Platform Moderator (Admin)')"></strong>
                 </div>
-                <div class="text-[11px] text-slate-400 hidden sm:block font-mono">
-                    UN SDG 2 (Zero Hunger) &bull; SDG 12 (Responsible Consumption)
+                <div class="text-[11px] text-slate-500 hidden sm:block font-mono">
+                    Click any food card to inspect full nutrition, logistics & claim slip.
                 </div>
             </div>
 
             <!-- COMPACT HIGH-SIGNAL IMPACT METRICS BAR -->
             <section class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
                 
-                <!-- Metric 1: Food Waste Diverted (kg) -->
+                <!-- Food Waste Diverted (kg) -->
                 <div class="glass-card rounded-2xl p-4 flex items-center space-x-3.5">
                     <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 flex items-center justify-center shrink-0">
                         <i data-lucide="scale" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Food Diverted</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Food Diverted</div>
                         <div class="flex items-baseline space-x-1">
-                            <span class="text-2xl font-bold text-slate-900 tracking-tight tabular-nums" x-text="metrics.total_kg_saved"></span>
+                            <span class="text-2xl font-extrabold text-slate-900 tracking-tight tabular-nums" x-text="metrics.total_kg_saved"></span>
                             <span class="text-xs font-semibold text-slate-500">kg</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Metric 2: Meals Rescued -->
+                <!-- Meals Rescued -->
                 <div class="glass-card rounded-2xl p-4 flex items-center space-x-3.5">
                     <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-700 flex items-center justify-center shrink-0">
                         <i data-lucide="utensils" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Meals Rescued</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Meals Rescued</div>
                         <div class="flex items-baseline space-x-1">
-                            <span class="text-2xl font-bold text-slate-900 tracking-tight tabular-nums" x-text="metrics.total_meals_saved"></span>
+                            <span class="text-2xl font-extrabold text-slate-900 tracking-tight tabular-nums" x-text="metrics.total_meals_saved"></span>
                             <span class="text-xs font-semibold text-slate-500">servings</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Metric 3: CO2e Emissions Mitigated -->
+                <!-- CO2e Emissions Mitigated -->
                 <div class="glass-card rounded-2xl p-4 flex items-center space-x-3.5">
                     <div class="w-10 h-10 rounded-xl bg-sky-50 border border-sky-200/80 text-sky-700 flex items-center justify-center shrink-0">
                         <i data-lucide="cloud-off" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">CO₂e Avoided</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CO₂e Avoided</div>
                         <div class="flex items-baseline space-x-1">
-                            <span class="text-2xl font-bold text-slate-900 tracking-tight tabular-nums" x-text="metrics.total_co2_avoided_kg"></span>
+                            <span class="text-2xl font-extrabold text-slate-900 tracking-tight tabular-nums" x-text="metrics.total_co2_avoided_kg"></span>
                             <span class="text-xs font-semibold text-slate-500">kg</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Metric 4: Active Surplus Lots -->
+                <!-- Active Surplus Lots -->
                 <div class="glass-card rounded-2xl p-4 flex items-center space-x-3.5">
                     <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center shrink-0">
-                        <i data-lucide="package" class="w-5 h-5"></i>
+                        <i data-lucide="package-search" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Lots</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Surplus Lots</div>
                         <div class="flex items-baseline space-x-1">
-                            <span class="text-2xl font-bold text-slate-900 tracking-tight tabular-nums" x-text="metrics.active_count"></span>
-                            <span class="text-xs font-semibold text-slate-500">available now</span>
+                            <span class="text-2xl font-extrabold text-slate-900 tracking-tight tabular-nums" x-text="metrics.active_count"></span>
+                            <span class="text-xs font-semibold text-slate-500">available</span>
                         </div>
                     </div>
                 </div>
 
             </section>
 
-            <!-- 3. FEED FILTER TOOLBAR (Bento Style) -->
-            <div class="glass-panel rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 border border-slate-200/80">
-                <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
+            <!-- 3. LIVE SEARCH & FILTER TOOLBAR -->
+            <div class="glass-panel rounded-2xl p-3.5 flex flex-col md:flex-row items-center justify-between gap-3 border border-slate-200/80">
+                
+                <!-- Search Bar -->
+                <div class="relative w-full md:w-72">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                    <input type="text" x-model="searchQuery" placeholder="Search dishes, mess, or location..."
+                           class="w-full pl-9 pr-3 py-1.5 bg-white/90 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all">
+                </div>
+
+                <!-- Filter Chips -->
+                <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0 w-full md:w-auto">
                     <button type="button" @click="activeFilter = 'all'"
                             :class="activeFilter === 'all' ? 'bg-slate-900 text-white font-semibold' : 'bg-white/80 text-slate-600 hover:bg-white'"
                             class="px-3 py-1.5 rounded-lg text-xs border border-slate-200 transition-all shrink-0">
-                        All Lots (<span x-text="listings.length"></span>)
+                        All (<span x-text="listings.length"></span>)
                     </button>
                     
                     <button type="button" @click="activeFilter = 'urgent'"
                             :class="activeFilter === 'urgent' ? 'bg-coral-700 text-white font-semibold' : 'bg-white/80 text-coral-700 hover:bg-white'"
                             class="px-3 py-1.5 rounded-lg text-xs border border-coral-200 transition-all shrink-0 flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-coral-600"></span>
-                        Urgent (&lt; 2h left)
+                        Urgent (&lt; 2h)
                     </button>
 
                     <button type="button" @click="activeFilter = 'veg'"
                             :class="activeFilter === 'veg' ? 'bg-sage-700 text-white font-semibold' : 'bg-white/80 text-sage-700 hover:bg-white'"
                             class="px-3 py-1.5 rounded-lg text-xs border border-sage-200 transition-all shrink-0 flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-sage-600"></span>
-                        Pure Veg
+                        Veg Only
+                    </button>
+
+                    <button type="button" @click="activeFilter = 'nonveg'"
+                            :class="activeFilter === 'nonveg' ? 'bg-rose-700 text-white font-semibold' : 'bg-white/80 text-rose-700 hover:bg-white'"
+                            class="px-3 py-1.5 rounded-lg text-xs border border-rose-200 transition-all shrink-0 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+                        Non-Veg
                     </button>
 
                     <button type="button" @click="activeFilter = 'claimed'"
                             :class="activeFilter === 'claimed' ? 'bg-amber-600 text-white font-semibold' : 'bg-white/80 text-amber-700 hover:bg-white'"
                             class="px-3 py-1.5 rounded-lg text-xs border border-amber-200 transition-all shrink-0">
-                        Claimed / In-Transit
+                        In-Transit
                     </button>
-                </div>
-
-                <div class="text-xs text-slate-500 font-medium flex items-center gap-1.5 ml-auto">
-                    <i data-lucide="arrow-down-up" class="w-3.5 h-3.5 text-slate-400"></i>
-                    <span>Sorted by urgency (Closest to expiry)</span>
                 </div>
             </div>
 
-            <!-- 4. TACTILE LIGHT-GLASS LISTING CARD GRID -->
+            <!-- 4. TACTILE CARD GRID (WITH PROMINENT IMAGE FIRST & CLICK TO VIEW DETAILS) -->
             <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" x-show="currentRole !== 'admin'">
                 <template x-for="item in filteredListings" :key="item.id">
-                    <div class="glass-card rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group">
+                    <div class="glass-card rounded-2xl overflow-hidden flex flex-col justify-between relative group cursor-pointer border border-white/80"
+                         @click="openDetailsModal(item)">
                         
                         <div>
-                            <!-- Card Header: Dynamic Status Pill & Urgency Badge -->
-                            <div class="flex items-center justify-between gap-2 mb-3">
+                            <!-- PROMINENT FOOD IMAGE (CLICKABLE WITH OVERLAYS) -->
+                            <div class="relative h-48 w-full overflow-hidden bg-slate-100">
+                                <img :src="item.image_url" 
+                                     :alt="item.item_name" 
+                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                                 
-                                <!-- Status Badge -->
-                                <template x-if="item.status === 'Available'">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                                        Available
-                                    </span>
-                                </template>
-                                <template x-if="item.status === 'Claimed'">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
-                                        <i data-lucide="truck" class="w-3 h-3 text-amber-600"></i>
-                                        Claimed / Reserved
-                                    </span>
-                                </template>
-                                <template x-if="item.status === 'Completed'">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                                        <i data-lucide="check-check" class="w-3 h-3 text-emerald-600"></i>
-                                        Picked Up
-                                    </span>
-                                </template>
-                                <template x-if="item.status === 'Expired'">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                                        <i data-lucide="alert-circle" class="w-3 h-3"></i>
-                                        Safety Locked
-                                    </span>
-                                </template>
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-black/20"></div>
 
-                                <!-- Urgency Countdown Pill -->
-                                <span class="text-[11px] font-mono px-2 py-0.5 rounded-lg border tabular-nums"
-                                      :class="item.urgency_level === 'critical' ? 'bg-rose-50 text-rose-700 border-rose-200 font-bold' : (item.urgency_level === 'warning' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-50 text-slate-600 border-slate-200')"
-                                      x-text="item.urgency_label">
-                                </span>
-                            </div>
-
-                            <!-- Food Name -->
-                            <h3 class="text-base font-bold text-slate-900 tracking-tight mb-2 group-hover:text-emerald-700 transition-colors"
-                                x-text="item.item_name"></h3>
-
-                            <!-- Tags: Veg/Non-Veg, Category, Storage -->
-                            <div class="flex flex-wrap items-center gap-1.5 mb-3.5">
-                                <!-- Veg/Non-veg Dot Badge -->
-                                <template x-if="item.dietary_type === 'Veg'">
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                                        Pure Veg
-                                    </span>
-                                </template>
-                                <template x-if="item.dietary_type === 'Non-Veg'">
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
-                                        Non-Veg
-                                    </span>
-                                </template>
-
-                                <span class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
-                                      x-text="item.category"></span>
-
-                                <span class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-sky-50 text-sky-800 border border-sky-200 flex items-center gap-1"
-                                      x-text="item.storage_condition"></span>
-                            </div>
-
-                            <!-- Quantity & Servings Cardlet -->
-                            <div class="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-50/80 border border-slate-200/80 text-xs mb-3">
-                                <div>
-                                    <span class="text-[10px] text-slate-400 font-semibold uppercase block">Weight / Portions</span>
-                                    <span class="font-bold text-slate-900" x-text="item.quantity_kg + ' kg'"></span>
-                                    <span class="text-slate-500 text-[11px]" x-text="' (~' + item.servings_estimate + ' meals)'"></span>
+                                <!-- Status Badge Overlay Top-Left -->
+                                <div class="absolute top-3 left-3 flex items-center gap-1.5">
+                                    <template x-if="item.status === 'Available'">
+                                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600 text-white shadow-sm flex items-center gap-1">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                                            Available
+                                        </span>
+                                    </template>
+                                    <template x-if="item.status === 'Claimed'">
+                                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-white shadow-sm flex items-center gap-1">
+                                            <i data-lucide="truck" class="w-3 h-3"></i>
+                                            Claimed
+                                        </span>
+                                    </template>
+                                    <template x-if="item.status === 'Completed'">
+                                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-800 text-white shadow-sm flex items-center gap-1">
+                                            <i data-lucide="check" class="w-3 h-3"></i>
+                                            Picked Up
+                                        </span>
+                                    </template>
+                                    <template x-if="item.status === 'Expired'">
+                                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-600 text-white shadow-sm flex items-center gap-1">
+                                            <i data-lucide="lock" class="w-3 h-3"></i>
+                                            Expired
+                                        </span>
+                                    </template>
                                 </div>
-                                <div>
-                                    <span class="text-[10px] text-slate-400 font-semibold uppercase block">CO₂e Mitigation</span>
-                                    <span class="font-bold text-emerald-700" x-text="item.co2_saved_kg + ' kg'"></span>
-                                    <span class="text-slate-400 text-[10px]"> avoided</span>
+
+                                <!-- Urgency Countdown Top-Right -->
+                                <div class="absolute top-3 right-3">
+                                    <span class="text-[11px] font-mono px-2.5 py-1 rounded-full backdrop-blur-md font-bold shadow-sm"
+                                          :class="item.urgency_level === 'critical' ? 'bg-rose-600/90 text-white' : (item.urgency_level === 'warning' ? 'bg-amber-500/90 text-white' : 'bg-slate-900/80 text-white')"
+                                          x-text="item.urgency_label">
+                                    </span>
+                                </div>
+
+                                <!-- Bottom Overlay: Dietary and Quantity -->
+                                <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-xs text-white">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold backdrop-blur-md"
+                                          :class="item.dietary_type === 'Veg' ? 'bg-emerald-950/80 text-emerald-200 border border-emerald-400/40' : 'bg-rose-950/80 text-rose-200 border border-rose-400/40'">
+                                        <span class="w-1.5 h-1.5 rounded-full" :class="item.dietary_type === 'Veg' ? 'bg-emerald-400' : 'bg-rose-400'"></span>
+                                        <span x-text="item.dietary_type"></span>
+                                    </span>
+                                    <span class="font-bold text-white text-xs drop-shadow" x-text="item.quantity_kg + ' kg (~' + item.servings_estimate + ' meals)'"></span>
                                 </div>
                             </div>
 
-                            <!-- Remarks / Notes -->
-                            <p class="text-xs text-slate-500 italic mb-3 line-clamp-2" x-text="'&ldquo;' + item.notes + '&rdquo;'"></p>
+                            <!-- CARD BODY CONTENT -->
+                            <div class="p-4">
+                                <h3 class="text-base font-bold text-slate-900 tracking-tight group-hover:text-emerald-700 transition-colors line-clamp-1"
+                                    x-text="item.item_name"></h3>
+                                
+                                <p class="text-xs text-slate-500 mt-1 flex items-center gap-1 truncate">
+                                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                                    <span x-text="item.donor_org"></span>
+                                </p>
 
-                            <!-- Logistics & Address -->
-                            <div class="text-xs space-y-1 pt-2 border-t border-slate-100 text-slate-600">
-                                <div class="font-semibold text-slate-800 truncate" x-text="item.donor_org"></div>
-                                <div class="text-[11px] text-slate-500 flex items-center gap-1 truncate">
-                                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-                                    <span x-text="item.pickup_address"></span>
+                                <div class="flex items-center gap-2 mt-3 text-[11px] text-slate-600">
+                                    <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200" x-text="item.storage_condition"></span>
+                                    <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold" x-text="item.co2_saved_kg + ' kg CO₂e avoided'"></span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Card Footer & Persona Action -->
-                        <div class="mt-4 pt-3 border-t border-slate-200/70">
-                            
-                            <!-- Available Action for Receiver (NGO) -->
+                        <!-- Card Footer -->
+                        <div class="p-4 pt-0" @click.stop>
                             <template x-if="item.status === 'Available'">
-                                <button type="button" 
-                                        @click="openClaim(item)"
-                                        class="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 active:scale-95">
-                                    <i data-lucide="hand-heart" class="w-3.5 h-3.5"></i>
-                                    <span>Claim Food For Rescue</span>
-                                </button>
-                            </template>
-
-                            <!-- Claimed State: Show PIN & Pickup Completion -->
-                            <template x-if="item.status === 'Claimed'">
-                                <div class="space-y-2">
-                                    <div class="flex items-center justify-between text-xs bg-amber-50/80 border border-amber-200/80 rounded-xl p-2.5">
-                                        <div class="flex items-center gap-1.5 text-amber-900">
-                                            <i data-lucide="key" class="w-3.5 h-3.5 text-amber-700"></i>
-                                            <span class="font-mono font-bold" x-text="'PIN: #' + (item.claim_pin || '7842')"></span>
-                                        </div>
-                                        <span class="text-[10px] text-amber-800 truncate max-w-[140px]" x-text="item.claimed_by_org || 'Hope Shelter'"></span>
-                                    </div>
-
-                                    <button type="button" 
-                                            @click="completePickup(item.id, item.claim_pin)"
-                                            class="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-all flex items-center justify-center gap-1">
-                                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                                        <span>Verify Handover PIN & Complete</span>
+                                <div class="flex gap-2">
+                                    <button type="button" @click="openDetailsModal(item)"
+                                            class="w-1/3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors flex items-center justify-center gap-1">
+                                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                        <span>Details</span>
+                                    </button>
+                                    <button type="button" @click="openClaim(item)"
+                                            class="w-2/3 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-1 active:scale-95">
+                                        <i data-lucide="hand-heart" class="w-3.5 h-3.5"></i>
+                                        <span>Claim Food</span>
                                     </button>
                                 </div>
                             </template>
 
-                            <!-- Completed State -->
+                            <template x-if="item.status === 'Claimed'">
+                                <div class="space-y-1.5">
+                                    <div class="flex items-center justify-between text-xs bg-amber-50/80 border border-amber-200/80 rounded-xl p-2 font-mono">
+                                        <span class="font-bold text-amber-900" x-text="'PIN: #' + (item.claim_pin || '7842')"></span>
+                                        <span class="text-[10px] text-amber-800 truncate max-w-[130px]" x-text="item.claimed_by_org || 'NGO'"></span>
+                                    </div>
+                                    <button type="button" @click="completePickup(item.id, item.claim_pin)"
+                                            class="w-full py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-all flex items-center justify-center gap-1">
+                                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                        <span>Verify PIN & Handover</span>
+                                    </button>
+                                </div>
+                            </template>
+
                             <template x-if="item.status === 'Completed'">
-                                <div class="text-center py-2 text-xs font-semibold text-emerald-800 bg-emerald-50/80 rounded-xl border border-emerald-200 flex items-center justify-center gap-1.5">
+                                <div class="text-center py-2 text-xs font-semibold text-emerald-800 bg-emerald-50/80 rounded-xl border border-emerald-200 flex items-center justify-center gap-1">
                                     <i data-lucide="award" class="w-3.5 h-3.5 text-emerald-600"></i>
-                                    <span>Redistributed to Shelter Residents</span>
+                                    <span>Distributed to Shelter</span>
                                 </div>
                             </template>
 
-                            <!-- Expired State -->
                             <template x-if="item.status === 'Expired'">
-                                <div class="text-center py-2 text-xs font-medium text-slate-500 bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-center gap-1.5">
-                                    <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400"></i>
-                                    <span>Safe Window Expired &bull; Decommissioned</span>
+                                <div class="text-center py-2 text-xs font-medium text-slate-500 bg-slate-100 rounded-xl border border-slate-200">
+                                    Safety Window Expired
                                 </div>
                             </template>
-
                         </div>
 
                     </div>
                 </template>
             </section>
 
-            <!-- 5. ADMIN AUDIT & GOVERNANCE VIEW (Only shown when Admin role active) -->
+            <!-- 5. ADMIN AUDIT & GOVERNANCE VIEW -->
             <section class="glass-panel rounded-2xl p-6 border border-slate-200/90 space-y-4" x-show="currentRole === 'admin'">
                 <div class="flex items-center justify-between pb-3 border-b border-slate-200/70">
                     <div>
@@ -503,7 +584,7 @@
                             <i data-lucide="shield" class="w-5 h-5 text-blue-600"></i>
                             Administrative Food Audit & Governance Ledger
                         </h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Real-time status moderation, verification, and audit trace.</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Real-time listing trace, verification, and audit controls.</p>
                     </div>
                     <button type="button" @click="resetToSampleData()" 
                             class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors">
@@ -515,6 +596,7 @@
                     <table class="w-full text-left text-xs text-slate-600">
                         <thead class="bg-slate-100/70 text-slate-700 uppercase font-mono text-[10px] border-b border-slate-200">
                             <tr>
+                                <th class="py-3 px-3">Photo</th>
                                 <th class="py-3 px-3">Lot ID</th>
                                 <th class="py-3 px-3">Food Item</th>
                                 <th class="py-3 px-3">Donor Organization</th>
@@ -527,6 +609,9 @@
                         <tbody class="divide-y divide-slate-200/70">
                             <template x-for="item in listings" :key="item.id">
                                 <tr class="hover:bg-white/60 transition-colors">
+                                    <td class="py-2 px-3">
+                                        <img :src="item.image_url" class="w-10 h-10 rounded-lg object-cover border border-slate-200">
+                                    </td>
                                     <td class="py-3 px-3 font-mono text-slate-400" x-text="'#' + item.id"></td>
                                     <td class="py-3 px-3 font-semibold text-slate-900" x-text="item.item_name"></td>
                                     <td class="py-3 px-3 text-slate-600" x-text="item.donor_org"></td>
@@ -561,26 +646,169 @@
                     <span class="text-slate-400">&bull; IA3 Academic Evaluation</span>
                 </div>
                 <div class="text-[11px] text-slate-500 font-mono">
-                    Zero Setup SQLite &bull; Python Flask &bull; FAO Carbon Standard (1 kg = 2.5 kg CO₂e)
+                    Zero Setup SQLite &bull; Python Flask &bull; Firebase Google Auth &bull; 1 kg Food = 2.5 kg CO₂e
                 </div>
             </div>
         </footer>
 
         <!-- ============================================================== -->
-        <!-- FROSTED MODAL 1: LOG SURPLUS FOOD DONATION                    -->
+        <!-- MODAL: DETAILED FOOD INSPECTION MODAL (IMAGE + DETAILS)        -->
+        <!-- ============================================================== -->
+        <div x-show="openDetails" 
+             x-cloak
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md"
+             @keydown.escape.window="openDetails = false">
+            
+            <div class="glass-panel rounded-3xl max-w-2xl w-full border border-white/90 shadow-2xl overflow-hidden relative"
+                 @click.outside="openDetails = false">
+                
+                <template x-if="inspectedItem">
+                    <div>
+                        <!-- Hero Image Header with Gradient -->
+                        <div class="relative h-64 w-full bg-slate-900">
+                            <img :src="inspectedItem.image_url" 
+                                 :alt="inspectedItem.item_name" 
+                                 class="w-full h-full object-cover">
+                            
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+
+                            <button type="button" @click="openDetails = false" 
+                                    class="absolute top-4 right-4 p-2 rounded-full bg-black/40 text-white hover:bg-black/70 backdrop-blur-md transition-colors">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+
+                            <!-- Overlaid Title and Badges -->
+                            <div class="absolute bottom-4 left-6 right-6">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold text-white shadow-sm"
+                                          :class="inspectedItem.dietary_type === 'Veg' ? 'bg-emerald-600' : 'bg-rose-600'"
+                                          x-text="inspectedItem.dietary_type === 'Veg' ? '🌱 Pure Vegetarian' : '🍗 Non-Vegetarian'"></span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-md text-white"
+                                          x-text="inspectedItem.category"></span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500 text-white shadow-sm"
+                                          x-text="inspectedItem.urgency_label"></span>
+                                </div>
+                                <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight" x-text="inspectedItem.item_name"></h2>
+                            </div>
+                        </div>
+
+                        <!-- Modal Body Details -->
+                        <div class="p-6 sm:p-7 space-y-5 max-h-[70vh] overflow-y-auto">
+                            
+                            <!-- Nutrition & Impact Quick Strip -->
+                            <div class="grid grid-cols-4 gap-2.5 text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                                <div>
+                                    <span class="text-[10px] text-slate-400 font-bold uppercase block">Weight</span>
+                                    <span class="text-base font-extrabold text-slate-900" x-text="inspectedItem.quantity_kg + ' kg'"></span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-400 font-bold uppercase block">Portions</span>
+                                    <span class="text-base font-extrabold text-slate-900" x-text="'~' + inspectedItem.servings_estimate + ' meals'"></span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-400 font-bold uppercase block">CO₂e Avoided</span>
+                                    <span class="text-base font-extrabold text-emerald-600" x-text="inspectedItem.co2_saved_kg + ' kg'"></span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-400 font-bold uppercase block">Water Saved</span>
+                                    <span class="text-base font-extrabold text-sky-600" x-text="inspectedItem.water_saved_liters + ' L'"></span>
+                                </div>
+                            </div>
+
+                            <!-- Storage & Preparation Timeline -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs text-slate-600">
+                                <div class="p-3.5 rounded-2xl bg-white/80 border border-slate-200/80">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Thermal & Cold Chain Condition</div>
+                                    <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                        <i data-lucide="thermometer" class="w-4 h-4 text-emerald-600"></i>
+                                        <span x-text="inspectedItem.storage_condition"></span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 mt-1">Temperature safety monitored since preparation.</p>
+                                </div>
+
+                                <div class="p-3.5 rounded-2xl bg-white/80 border border-slate-200/80">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Expiration Deadline</div>
+                                    <div class="font-bold text-rose-700 flex items-center gap-1.5 font-mono">
+                                        <i data-lucide="clock-alert" class="w-4 h-4"></i>
+                                        <span x-text="inspectedItem.expires_at"></span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 mt-1">Automatic safety lockout enforced after deadline.</p>
+                                </div>
+                            </div>
+
+                            <!-- Notes / Remarks -->
+                            <template x-if="inspectedItem.notes">
+                                <div class="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200/70 text-xs text-amber-900">
+                                    <strong class="block mb-0.5">Special Handling & Packaging Remarks:</strong>
+                                    <p class="italic" x-text="'&ldquo;' + inspectedItem.notes + '&rdquo;'"></p>
+                                </div>
+                            </template>
+
+                            <!-- Logistics & Contact -->
+                            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                                <div class="font-bold text-slate-900 flex items-center justify-between">
+                                    <span x-text="inspectedItem.donor_org"></span>
+                                    <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(inspectedItem.pickup_address)" 
+                                       target="_blank" 
+                                       class="text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1">
+                                        <i data-lucide="map" class="w-3.5 h-3.5"></i>
+                                        <span>Open Map Directions</span>
+                                    </a>
+                                </div>
+                                <div class="text-slate-600 flex items-center gap-1.5">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                                    <span x-text="inspectedItem.pickup_address"></span>
+                                </div>
+                                <div class="text-slate-600 flex items-center gap-1.5 font-mono">
+                                    <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                                    <span x-text="inspectedItem.pickup_contact"></span>
+                                </div>
+                            </div>
+
+                            <!-- Modal Action Footer -->
+                            <div class="pt-2 flex items-center justify-between gap-3 border-t border-slate-200">
+                                <button type="button" @click="printSlip(inspectedItem)"
+                                        class="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5">
+                                    <i data-lucide="printer" class="w-4 h-4"></i>
+                                    <span>Print Dispatch Slip</span>
+                                </button>
+
+                                <template x-if="inspectedItem.status === 'Available'">
+                                    <button type="button" @click="openDetails = false; openClaim(inspectedItem)"
+                                            class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5">
+                                        <i data-lucide="hand-heart" class="w-4 h-4"></i>
+                                        <span>Claim This Donation</span>
+                                    </button>
+                                </template>
+
+                                <template x-if="inspectedItem.status === 'Claimed'">
+                                    <div class="font-mono text-xs font-bold text-amber-800 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200"
+                                         x-text="'Handover PIN: #' + inspectedItem.claim_pin"></div>
+                                </template>
+                            </div>
+
+                        </div>
+                    </div>
+                </template>
+
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- FROSTED MODAL: LOG SURPLUS FOOD DONATION WITH IMAGE UPLOAD     -->
         <!-- ============================================================== -->
         <div x-show="openDonateModal" 
              x-cloak
              class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
              @keydown.escape.window="openDonateModal = false">
             
-            <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-white/90 shadow-2xl relative"
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-white/90 shadow-2xl relative max-h-[90vh] overflow-y-auto"
                  @click.outside="openDonateModal = false">
                 
                 <div class="flex items-center justify-between pb-4 border-b border-slate-200/80 mb-5">
                     <div>
                         <h3 class="text-lg font-bold text-slate-900 tracking-tight">Log Surplus Food For Rescue</h3>
-                        <p class="text-xs text-slate-500">Broadcast edible surplus immediately to local verified shelters.</p>
+                        <p class="text-xs text-slate-500">Include a photo so shelters can verify quality immediately.</p>
                     </div>
                     <button type="button" @click="openDonateModal = false" class="p-1 rounded-lg text-slate-400 hover:text-slate-700">
                         <i data-lucide="x" class="w-5 h-5"></i>
@@ -589,30 +817,62 @@
 
                 <form @submit.prevent="submitDonation()" class="space-y-4">
                     
-                    <!-- Item Name -->
+                    <!-- Food Item Name -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                            Food Item Description <span class="text-rose-500">*</span>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                            Food Item Name <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" x-model="donateForm.item_name" required
-                               placeholder="e.g. Steamed Rice, Dal Makhani & 60 Rotis"
-                               class="w-full bg-white/80 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all">
+                               placeholder="e.g. Steamed Basmati Rice & Dal Makhani"
+                               class="w-full bg-white/80 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-emerald-600 transition-all">
+                    </div>
+
+                    <!-- Image Upload & Preset Section -->
+                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Food Photograph (File Upload or Image URL)
+                        </label>
+
+                        <!-- File Input -->
+                        <input type="file" id="foodFileInput" accept="image/*" @change="handleFileSelect($event)"
+                               class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+
+                        <div class="text-[11px] text-slate-400 text-center font-medium">-- OR paste photo link / choose preset --</div>
+
+                        <input type="url" x-model="donateForm.image_url" placeholder="https://images.unsplash.com/..."
+                               class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700">
+
+                        <!-- 1-Click Quick Presets -->
+                        <div class="flex flex-wrap gap-1.5 pt-1">
+                            <button type="button" @click="donateForm.image_url = 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=800&q=80'" class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-[10px] text-slate-600 hover:border-emerald-500">🍛 Rice & Curry</button>
+                            <button type="button" @click="donateForm.image_url = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80'" class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-[10px] text-slate-600 hover:border-emerald-500">🥐 Bakery Breads</button>
+                            <button type="button" @click="donateForm.image_url = 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80'" class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-[10px] text-slate-600 hover:border-emerald-500">🍗 Dum Biryani</button>
+                            <button type="button" @click="donateForm.image_url = 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80'" class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-[10px] text-slate-600 hover:border-emerald-500">🍲 Khichdi / Dal</button>
+                        </div>
+
+                        <!-- Live Photo Preview -->
+                        <template x-if="imagePreview || donateForm.image_url">
+                            <div class="mt-2 relative h-32 rounded-xl overflow-hidden border border-emerald-300">
+                                <img :src="imagePreview || donateForm.image_url" class="w-full h-full object-cover">
+                                <span class="absolute bottom-1 right-2 text-[9px] bg-black/60 text-white px-2 py-0.5 rounded backdrop-blur">Photo Preview</span>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Category & Dietary Type -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Category</label>
-                            <select x-model="donateForm.category" class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Category</label>
+                            <select x-model="donateForm.category" class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
                                 <option value="Cooked Meal">Cooked Meal</option>
-                                <option value="Bakery">Bakery & Pastries</option>
+                                <option value="Bakery">Bakery & Bread</option>
                                 <option value="Packaged Goods">Packaged Food</option>
                                 <option value="Raw Produce">Raw Produce</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Dietary Type</label>
-                            <select x-model="donateForm.dietary_type" class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Dietary Preference</label>
+                            <select x-model="donateForm.dietary_type" class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
                                 <option value="Veg">🌱 Pure Vegetarian</option>
                                 <option value="Non-Veg">🍗 Non-Vegetarian</option>
                                 <option value="Vegan">🌿 Vegan</option>
@@ -620,53 +880,42 @@
                         </div>
                     </div>
 
-                    <!-- Quantity & Expiry Window -->
+                    <!-- Quantity & Expiry -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Quantity (kg) <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Quantity (kg) <span class="text-rose-500">*</span></label>
                             <input type="number" step="0.5" min="1" max="500" x-model="donateForm.quantity_kg" required
-                                   placeholder="25.0"
-                                   class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                                   class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Expiry Window (Hours) <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Expiry Window (Hours) <span class="text-rose-500">*</span></label>
                             <input type="number" step="0.5" min="0.5" max="24" x-model="donateForm.expiry_hours" required
-                                   class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                                   class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
                         </div>
                     </div>
 
-                    <!-- Storage Condition & Pickup Address -->
+                    <!-- Storage & Pickup Location -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Storage Condition</label>
-                            <select x-model="donateForm.storage_condition" class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Storage Condition</label>
+                            <select x-model="donateForm.storage_condition" class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
                                 <option value="Hot Insulated (>60°C)">🔥 Hot Insulated (&gt;60°C)</option>
                                 <option value="Chilled (4°C)">❄️ Chilled (4°C)</option>
                                 <option value="Room Temp / Dry">📦 Room Temp / Dry</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Pickup Landmark</label>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Pickup Landmark</label>
                             <input type="text" x-model="donateForm.pickup_address" required
-                                   placeholder="Mess Gate 2 Loading Dock"
-                                   class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                                   placeholder="Mess Loading Gate 2"
+                                   class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
                         </div>
                     </div>
 
-                    <!-- Remarks -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Special Handling / Allergen Notes</label>
-                        <input type="text" x-model="donateForm.notes"
-                               placeholder="e.g. Packed in stainless steel containers. Please bring transfer boxes."
-                               class="w-full bg-white/80 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
-                    </div>
-
                     <div class="pt-2 flex justify-end gap-2.5">
-                        <button type="button" @click="openDonateModal = false" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">
-                            Cancel
-                        </button>
+                        <button type="button" @click="openDonateModal = false" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
                         <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-all">
-                            Broadcast to Redistribution Feed
+                            Broadcast to Feed with Photo
                         </button>
                     </div>
 
@@ -675,7 +924,7 @@
         </div>
 
         <!-- ============================================================== -->
-        <!-- FROSTED MODAL 2: CLAIM FOOD DONATION                           -->
+        <!-- FROSTED MODAL: CLAIM FOOD DONATION                             -->
         <!-- ============================================================== -->
         <div x-show="openClaimModal" 
              x-cloak
@@ -730,17 +979,10 @@
             </div>
         </div>
 
-        <!-- ============================================================== -->
-        <!-- FROSTED TOAST FEEDBACK                                         -->
-        <!-- ============================================================== -->
+        <!-- TOAST FEEDBACK -->
         <div x-show="toast.show" 
              x-cloak
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 translate-y-3"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100 translate-y-0"
-             x-transition:leave-end="opacity-0 translate-y-3"
+             x-transition
              class="fixed bottom-5 right-5 z-50 glass-panel border border-emerald-300 rounded-2xl px-4 py-3 shadow-lg flex items-center space-x-2.5 text-xs font-semibold text-slate-800">
             <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
             <span x-text="toast.message"></span>
@@ -748,15 +990,21 @@
 
     </div>
 
-    <!-- Application Script (Alpine.js Component Logic) -->
+    <!-- Alpine.js Application Logic -->
     <script>
         function foodApp() {
             return {
-                currentRole: 'receiver', // Default evaluation persona
+                currentRole: 'receiver',
                 activeFilter: 'all',
+                searchQuery: '',
                 openDonateModal: false,
                 openClaimModal: false,
+                openDetails: false,
+                inspectedItem: null,
                 targetItem: null,
+                currentUser: null,
+                imageFile: null,
+                imagePreview: null,
                 metrics: {
                     total_kg_saved: {{ metrics.total_kg_saved }},
                     total_meals_saved: {{ metrics.total_meals_saved }},
@@ -773,7 +1021,8 @@
                     expiry_hours: 4.0,
                     storage_condition: 'Hot Insulated (>60°C)',
                     pickup_address: 'Campus Dining Complex, Loading Dock 1',
-                    notes: ''
+                    notes: '',
+                    image_url: ''
                 },
                 claimForm: {
                     ngo_name: 'Hope Community Shelter & Food Bank',
@@ -785,13 +1034,45 @@
                 },
 
                 initApp() {
+                    window.activeRole = this.currentRole;
                     this.fetchListings();
+                    this.$nextTick(() => lucide.createIcons());
+                },
+
+                loginWithGoogle() {
+                    if (window.firebaseLoginWithGoogle) {
+                        window.firebaseLoginWithGoogle();
+                    } else {
+                        alert("Firebase Google Auth initializing...");
+                    }
+                },
+
+                logoutGoogle() {
+                    if (window.firebaseSignOut) {
+                        window.firebaseSignOut();
+                    }
+                },
+
+                handleAuthUpdate(detail) {
+                    if (detail && detail.loggedIn) {
+                        this.currentUser = detail.user;
+                        this.showToast(`Signed in with Google as ${this.currentUser.displayName}!`);
+                        if (this.currentRole === 'donor') {
+                            this.donateForm.donor_org = `${this.currentUser.displayName}'s Kitchen`;
+                        } else {
+                            this.claimForm.ngo_name = `${this.currentUser.displayName} (Volunteer Shelter)`;
+                        }
+                    } else {
+                        this.currentUser = null;
+                        this.showToast("Signed out of Google account.");
+                    }
                     this.$nextTick(() => lucide.createIcons());
                 },
 
                 switchRole(role) {
                     this.currentRole = role;
-                    this.showToast(`Switched active persona to ${role.toUpperCase()} view.`);
+                    window.activeRole = role;
+                    this.showToast(`Switched active view to ${role.toUpperCase()}.`);
                     this.$nextTick(() => lucide.createIcons());
                 },
 
@@ -799,6 +1080,18 @@
                     this.toast.message = msg;
                     this.toast.show = true;
                     setTimeout(() => { this.toast.show = false; }, 3500);
+                },
+
+                handleFileSelect(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        this.imageFile = file;
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            this.imagePreview = event.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
                 },
 
                 async fetchListings() {
@@ -821,25 +1114,60 @@
 
                 get filteredListings() {
                     return this.listings.filter(item => {
+                        // Search filter
+                        if (this.searchQuery) {
+                            const q = this.searchQuery.toLowerCase();
+                            const matches = item.item_name.toLowerCase().includes(q) ||
+                                            item.donor_org.toLowerCase().includes(q) ||
+                                            item.pickup_address.toLowerCase().includes(q);
+                            if (!matches) return false;
+                        }
+
+                        // Category/Tag filter
                         if (this.activeFilter === 'urgent') return item.urgency_level === 'critical';
                         if (this.activeFilter === 'veg') return item.dietary_type === 'Veg';
+                        if (this.activeFilter === 'nonveg') return item.dietary_type === 'Non-Veg';
                         if (this.activeFilter === 'claimed') return item.status === 'Claimed';
                         return true;
                     });
                 },
 
+                openDetailsModal(item) {
+                    this.inspectedItem = item;
+                    this.openDetails = true;
+                    this.$nextTick(() => lucide.createIcons());
+                },
+
                 async submitDonation() {
                     try {
+                        let formData = new FormData();
+                        formData.append('item_name', this.donateForm.item_name);
+                        formData.append('donor_org', this.donateForm.donor_org);
+                        formData.append('category', this.donateForm.category);
+                        formData.append('dietary_type', this.donateForm.dietary_type);
+                        formData.append('quantity_kg', this.donateForm.quantity_kg);
+                        formData.append('expiry_hours', this.donateForm.expiry_hours);
+                        formData.append('storage_condition', this.donateForm.storage_condition);
+                        formData.append('pickup_address', this.donateForm.pickup_address);
+                        formData.append('notes', this.donateForm.notes);
+                        formData.append('image_url', this.donateForm.image_url || '');
+
+                        if (this.imageFile) {
+                            formData.append('image_file', this.imageFile);
+                        }
+
                         const res = await fetch('/api/listings', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(this.donateForm)
+                            body: formData
                         });
                         const data = await res.json();
                         if (data.success) {
                             this.showToast(data.message);
                             this.openDonateModal = false;
                             this.donateForm.item_name = '';
+                            this.donateForm.image_url = '';
+                            this.imageFile = null;
+                            this.imagePreview = null;
                             await this.fetchListings();
                         } else {
                             alert(data.message);
@@ -921,6 +1249,42 @@
                     } catch (e) {
                         alert('Error resetting data');
                     }
+                },
+
+                printSlip(item) {
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                        <html>
+                        <head>
+                            <title>Redistribution Dispatch Slip - #${item.id}</title>
+                            <style>
+                                body { font-family: sans-serif; padding: 24px; color: #1e293b; }
+                                .slip { border: 2px dashed #059669; padding: 20px; border-radius: 12px; max-width: 500px; margin: auto; }
+                                h2 { color: #059669; margin-top: 0; }
+                                .pin { font-size: 28px; font-weight: bold; font-family: monospace; letter-spacing: 4px; color: #d97706; margin: 12px 0; }
+                                .row { display: flex; justify-content: space-between; margin: 8px 0; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="slip">
+                                <h2>🌿 EcoRescue Redistribution Pass</h2>
+                                <p><strong>Food Lot:</strong> ${item.item_name}</p>
+                                <div class="row"><span>Quantity:</span><strong>${item.quantity_kg} kg (~${item.servings_estimate} meals)</strong></div>
+                                <div class="row"><span>Donor Entity:</span><strong>${item.donor_org}</strong></div>
+                                <div class="row"><span>Pickup Address:</span><strong>${item.pickup_address}</strong></div>
+                                <div class="row"><span>Safe Window Deadline:</span><strong>${item.expires_at}</strong></div>
+                                <div class="row"><span>Storage Requirement:</span><strong>${item.storage_condition}</strong></div>
+                                <div style="text-align: center; margin-top: 20px;">
+                                    <small>HANDOVER VERIFICATION PIN:</small>
+                                    <div class="pin">#${item.claim_pin || '7842'}</div>
+                                    <small>Verify with donor before loading transport vehicle.</small>
+                                </div>
+                            </div>
+                            <script>window.onload = function() { window.print(); }<\/script>
+                        </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
                 }
             }
         }
