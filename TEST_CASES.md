@@ -897,6 +897,52 @@ TEST CATEGORY 7: CONTINUOUS INTEGRATION & AUTOMATION (GitHub Actions CI/CD)
 
 ---
 
+#### Test Case ID: `TC-DONOR-01`
+- **Requirement ID:** `REQ-DNR-01` (Mess Donor Safe Consumption Window Extension)
+- **Test Objective:** Verify that a mess supervisor can extend the safe consumption window (+45 minutes) if surplus food is actively maintained under thermal holding (>65°C) in compliant chafing containers.
+- **Preconditions:** Listing exists with status `Available` or nearing expiry.
+- **Test Procedure:**
+  1. Authenticate or switch active role to Mess Donor (`donor`).
+  2. Locate an active food lot card on the Mess Dispatch console.
+  3. Click `+45m Safety Window`.
+  4. Send POST request to `/api/listing/<id>/extend` with `{"minutes": 45}`.
+- **Input Data:** `{"minutes": 45}` on listing ID #1.
+- **Expected Result:** Backend recalculates `expires_at = now + 45m`, returns HTTP 200, updates countdown timer, and shows confirmation toast.
+- **Actual Result:** Expiration timestamp extended; countdown recalculated; status is `Available`.
+- **Status:** **PASS**
+- **Remarks / Evidence:** Automated unit test `test_tc_donor_01_extend_safety_window` passed in `test_system.py`.
+
+#### Test Case ID: `TC-DONOR-02`
+- **Requirement ID:** `REQ-DNR-02` (Mess Donor Reservation Release on NGO Transport Failure)
+- **Test Objective:** Verify that a mess supervisor can void an NGO reservation and restore the food lot back to the live public redistribution feed if the NGO logistics vehicle is delayed.
+- **Preconditions:** Food listing is in `Claimed` status with an assigned PIN.
+- **Test Procedure:**
+  1. On the Mess Donor Handover station, locate the claimed batch (e.g., Lot #4).
+  2. Click `Release Reservation`.
+  3. Send POST request to `/api/listing/<id>/cancel-claim`.
+- **Input Data:** Listing ID #4.
+- **Expected Result:** Database resets `status = 'Available'`, clears `claim_pin`, `claimed_by_org`, and `claimed_at`; returns HTTP 200.
+- **Actual Result:** Listing successfully transitioned back to `Available`; PIN nullified; visible on public NGO feed.
+- **Status:** **PASS**
+- **Remarks / Evidence:** Automated unit test `test_tc_donor_02_cancel_claim_reservation` passed in `test_system.py`.
+
+#### Test Case ID: `TC-DONOR-03`
+- **Requirement ID:** `REQ-DNR-03` (FSSAI Redistribution Gate Pass & Security Docket Generation)
+- **Test Objective:** Verify generation of an official printable Campus Redistribution Gate Pass containing consignor mess, consignee NGO, thermal handling compliance declaration, and verified PIN stamp.
+- **Preconditions:** Food lot has been logged or claimed in the system.
+- **Test Procedure:**
+  1. From the Mess Donor console, click `View & Print Gate Pass` on any batch.
+  2. System launches the official `EcoRescue Dispatch Docket` modal.
+  3. Verify gate pass number (`GP-2026-X`), mess dock address, shelter phone, and driver sign-off fields.
+  4. Click `Print Official Security Pass (PDF)` to trigger `window.print()`.
+- **Input Data:** Lot #1 (Basmati Rice & Paneer Butter Masala, 28.5 kg).
+- **Expected Result:** Gate pass renders all metadata, compliance signatures, and cryptographic PIN watermark.
+- **Actual Result:** Gate pass modal opened with complete thermal compliance stamps and printable stylesheet.
+- **Status:** **PASS**
+- **Remarks / Evidence:** Implemented in `templates/index.html` with dual sign-off blocks and FSSAI certification seal.
+
+---
+
 ### 4.3 Defect Tracking & Remediation Log (During Development)
 
 
