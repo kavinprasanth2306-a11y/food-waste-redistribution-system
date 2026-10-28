@@ -222,3 +222,5 @@ For instantaneous academic viva evaluation, use the **top banner quick-persona b
 1. **Geospatial Proximity Sorting:** Incorporate PostGIS or Haversine formula to sort feed items based on road distance between donor and NGO GPS coordinates.
 2. **Push Notifications:** WebSockets or Firebase Cloud Messaging (FCM) to dispatch immediate alerts to shelters within a 5 km radius when high-urgency cooked food is logged.
 3. **Volunteer Last-Mile Delivery:** Integrate third-party micro-delivery APIs (e.g. Dunzo/Uber Direct) for NGOs lacking dedicated transport vehicles.
+#   f o o d - w a s t e - r e d i s t r i b u t i o n - s y s t e m  
+ 
