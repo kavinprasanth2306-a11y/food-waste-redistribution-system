@@ -1,31 +1,32 @@
 # 🌿 Smart Food Waste Management & Redistribution Platform
 
-> **Academic Evaluation (IA3) Micro-Project**  
-> **Domain:** Cloud, Web Engineering & Sustainable Computing  
-> **Aligned Goals:** UN Sustainable Development Goal 2 (*Zero Hunger*) & Goal 12 (*Responsible Consumption & Production*)
+> **Academic Evaluation (IA3) Micro-Project Report & Source Code Guide**  
+> **Domain:** Full-Stack Web Engineering & Sustainable Environmental Informatics  
+> **Aligned Goals:** UN Sustainable Development Goal 2 (*Zero Hunger*) & Goal 12 (*Responsible Consumption & Production*)  
+> **UI Aesthetic:** Ultra-Clean Light Glassmorphism ("Anti-AI" Tactile Human-Crafted Design System)
 
 ---
 
-## 1. Academic Metadata & Project Overview
+## 1. Academic Metadata (IA3 Report Ready)
 
 ### 1.1 Problem Statement
-In institutional environments such as university mess halls, hostel canteens, banquet venues, and urban restaurants, significant quantities of safe, edible prepared food are discarded daily due to demand over-estimation, lack of immediate storage infrastructure, and rigid consumption windows. Simultaneously, local community food banks, night shelters, and welfare NGOs within a 5–15 km radius suffer chronic shortages of cooked meals. 
+In institutional food preparation environments—specifically university messes, student hostel dining halls, hotel banquets, and commercial catering hubs—large quantities of freshly prepared, high-nutrition food are discarded daily due to attendance over-estimation and rigid meal serving windows. Concurrently, community shelters, night refuges, and hunger-relief NGOs within short transport radii (5–12 km) face daily supply deficits. 
 
-The primary friction in standard redistribution is **informational asymmetry and time latency**: prepared perishable meals spoil if not claimed and redistributed within strict 2-to-6 hour safety windows, and existing donation workflows lack real-time status tracking, temperature/storage categorization, and secure handover protocols.
+The core challenge is **time-critical informational latency**: cooked perishable food possesses a strictly bounded safe redistribution window (typically 2 to 6 hours). Without real-time status broadcasting, cold-chain/thermal categorization, and cryptographic verification of physical handoff, surplus food spoils before it can be collected, resulting in preventable landfill methane generation.
 
 ### 1.2 Project Objectives (Specific & Measurable)
-1. **Reduce Edible Food Waste:** Divert at least 70% of logged institutional surplus from local landfill dumping.
-2. **Real-Time Dynamic Urgency Feed:** Classify and prioritize available surplus listings by remaining safe consumption windows (`< 2h Critical`, `2-6h Warning`, `> 6h Safe`) using real-time countdown tickers.
-3. **Automated Safety Lockout:** Automatically transition listings to an immutable `Expired` status the second their safe window lapses, preventing foodborne health hazards.
-4. **Verified Handover Security:** Eliminate ghost claims via a cryptographic 4-digit Handover PIN generated dynamically upon reservation and verified at physical pickup.
-5. **Measurable Carbon & Water Metrics:** Quantify environmental impact via standardized indices:
-   $$\text{CO}_2\text{e Avoided (kg)} = \text{Food Diverted (kg)} \times 2.5$$
-   $$\text{Water Preserved (L)} = \text{Food Diverted (kg)} \times 1,000$$
+1. **Surplus Diversion Rate:** Provide an instant broadcast channel enabling institutional donors to list edible surplus within 60 seconds of meal service completion.
+2. **Urgency-Ranked Discovery:** Automatically sort marketplace feed items by remaining safe consumption hours (`Urgent < 2h`, `Warning 2–5h`, `Safe > 5h`), ensuring that lots closest to expiration receive immediate priority.
+3. **Automated Food Safety Lockout:** Dynamically transition listings to an immutable `Expired / Safety Locked` status the moment their countdown reaches zero, mitigating foodborne illness risks.
+4. **Zero-Friction Handover Protocol:** Eliminate ghost claims using an ephemeral 4-digit verification PIN generated at reservation time and verified during physical pickup.
+5. **Standardized Environmental Carbon Telemetry:** Dynamically calculate greenhouse gas abatement using the Food and Agriculture Organization (FAO) index:
+   $$\text{CO}_2\text{e Avoided (kg)} = \text{Food Waste Rescued (kg)} \times 2.5$$
+   $$\text{Virtual Water Saved (Liters)} = \text{Food Waste Rescued (kg)} \times 1,000$$
 
 ### 1.3 Scope and Target Beneficiaries
-- **Institutional Donors:** University dining halls, hostel messes, convention centers, catering kitchens.
-- **Claimants / Receivers:** Verified hunger-relief NGOs, registered orphanages, night shelters, student volunteer rescue squads.
-- **Regulatory / Platform Admins:** University sustainability auditors and food safety moderators.
+- **Donors:** University dining mess supervisors, canteen contractors, banquet and convention hall managers.
+- **Claimants / Receivers:** Registered shelter homes, disaster relief NGOs, verified student community volunteer networks.
+- **Auditors & Administrators:** Institution food safety officers, campus sustainability review committees.
 
 ---
 
@@ -35,102 +36,108 @@ The primary friction in standard redistribution is **informational asymmetry and
 
 ```mermaid
 graph TD
-    subgraph Client Layer [Modern Responsive Frontend]
-        A1[Donor Portal: Surplus Logger]
-        A2[Receiver Marketplace: Urgent Feed & Pin Claim]
-        A3[Impact Dashboard: Chart.js & Metrics]
-        A4[Admin Console: Moderation & Audit]
+    subgraph Presentation Layer [Ultra-Clean Light Glassmorphism UI]
+        UI1[Sticky Frosted Navbar + Live Role Switcher]
+        UI2[Tactile Impact Metrics Bar]
+        UI3[Urgency-Sorted Feed Grid]
+        UI4[Frosted 'Log Surplus' Modal]
+        UI5[Claim & Verification Modal]
+        UI6[Admin Audit Ledger]
     end
 
-    subgraph Application Layer [Flask 3.1 Backend]
-        B1[Authentication & Role Management]
-        B2[Donation Engine & Expiry Watcher]
-        B3[Claim Verification & PIN Protocol]
-        B4[Environmental Analytics Aggregator]
+    subgraph Controller & Business Logic [Python Flask 3.1]
+        API1[Dynamic Expiry Engine & Urgency Calculator]
+        API2[Listing Creation & Validation Handler]
+        API3[Atomic Claim & PIN Generation Protocol]
+        API4[Handover PIN Verifier]
+        API5[Environmental Telemetry Aggregator]
     end
 
-    subgraph Persistence Layer [SQLite Database]
-        C1[(users Table)]
-        C2[(food_donations Table)]
+    subgraph Storage Layer [Zero-Setup SQLite]
+        DB[(food_redistribution.db)]
+        T1[users Table]
+        T2[food_listings Table]
     end
 
-    A1 -->|POST /donate| B2
-    A2 -->|POST /claim| B3
-    A2 -->|POST /complete| B3
-    A3 -->|GET /dashboard, /api/metrics| B4
-    A4 -->|GET /admin, POST actions| B1
+    UI1 -->|Switch Role State| Presentation Layer
+    UI2 <-->|GET /api/metrics| API5
+    UI3 <-->|GET /api/listings| API1
+    UI4 -->|POST /api/listings| API2
+    UI5 -->|POST /api/claim, /api/complete| API3 & API4
+    UI6 -->|POST /api/delete, /api/reset-demo| DB
 
-    B1 <--> C1
-    B2 <--> C2
-    B3 <--> C2
-    B4 <--> C2
+    API1 <--> DB
+    API2 <--> DB
+    API3 <--> DB
+    API4 <--> DB
+    API5 <--> DB
 ```
 
 ### 2.2 Entity-Relationship (ER) Schema
 
 ```mermaid
 erDiagram
-    USER ||--o{ FOOD_DONATION : "posts (as donor)"
-    USER ||--o{ FOOD_DONATION : "claims (as receiver)"
+    USERS ||--o{ FOOD_LISTINGS : "logs surplus as donor"
 
-    USER {
-        int id PK
-        string name
-        string email UK
-        string password_hash
-        string role "donor | receiver | admin"
-        string organization
-        string phone
-        string address
-        boolean is_verified
-        datetime created_at
+    USERS {
+        INTEGER id PK
+        TEXT name
+        TEXT email UK
+        TEXT role "donor | receiver | admin"
+        TEXT organization
+        TEXT phone
+        TEXT address
+        INTEGER is_verified
+        TIMESTAMP created_at
     }
 
-    FOOD_DONATION {
-        int id PK
-        int donor_id FK
-        string item_name
-        string category "Cooked Meal | Bakery | Packaged Goods | Raw Produce"
-        string dietary_type "Veg | Non-Veg | Vegan"
-        float quantity_kg
-        int servings_estimate
-        string storage_condition "Hot Insulated | Chilled | Room Temp"
-        datetime prepared_at
-        datetime expires_at
-        string pickup_address
-        string pickup_contact
-        text notes
-        string status "Available | Claimed | Completed | Expired"
-        string claim_pin "4-digit verification code"
-        int claimed_by_id FK
-        datetime claimed_at
-        datetime completed_at
-        datetime created_at
+    FOOD_LISTINGS {
+        INTEGER id PK
+        INTEGER donor_id FK
+        TEXT item_name
+        TEXT donor_org
+        TEXT category "Cooked Meal | Bakery | Packaged Goods | Raw Produce"
+        TEXT dietary_type "Veg | Non-Veg | Vegan"
+        REAL quantity_kg
+        INTEGER servings_estimate
+        TEXT storage_condition "Hot Insulated | Chilled | Room Temp"
+        TIMESTAMP prepared_at
+        TIMESTAMP expires_at
+        TEXT pickup_address
+        TEXT pickup_contact
+        TEXT notes
+        TEXT status "Available | Claimed | Completed | Expired"
+        TEXT claim_pin "4-digit verification code"
+        TEXT claimed_by_org
+        TEXT claimed_by_contact
+        TIMESTAMP claimed_at
+        TIMESTAMP completed_at
+        TIMESTAMP created_at
     }
 ```
 
 ---
 
-## 3. Technology Stack
+## 3. Technology Stack & Design System Justification
 
-| Layer | Technology | Rationale |
+| Layer | Component | Technical Justification |
 |---|---|---|
-| **Backend Engine** | Python 3.12 + Flask 3.1 | Clean, lightweight, modular, zero boiler-plate |
-| **ORM / Storage** | SQLAlchemy 2.0 + SQLite 3 | Serverless, zero configuration, instant portability |
-| **Styling & UI** | Tailwind CSS + Glassmorphism | Ultra-modern dark UI, high contrast, responsive |
-| **Data Visualization** | Chart.js | Real-time doughnut and status bar telemetry |
-| **Icons & Micro-UI** | Lucide Icons | Clean SVG feather icons with zero heavy assets |
+| **Backend Engine** | Python 3.12 + Flask 3.1 | Clean, lightweight, standard WSGI architecture without heavy boilerplate. |
+| **Persistence** | SQLite (`food_redistribution.db`) | Zero configuration; auto-creates and auto-seeds on first run so evaluators run it in under 60 seconds. |
+| **Reactive Client** | Alpine.js 3.13 + Vanilla JS | Declarative, instant state binding for filtering and role-switching without page reloads. |
+| **Design System** | Ultra-Clean Light Glassmorphism | `#f8fafc` ambient background, diffused refraction orbs, frosted white glass (`rgba(255,255,255,0.72)`), hairline white borders, and soft semantic badges. Eliminates generic dark neon AI templates. |
+| **Vector Icons** | Lucide Icons CDN | Crisp SVG geometry matching human-crafted typography. |
 
 ---
 
-## 4. Setup & Execution Guide
+## 4. Setup & Local Execution Guide
 
-### Step 1: Navigate to Project Directory
+### Step 1: Navigate to Workspace
 ```powershell
 cd e:\projects\Apps\connected\foodwasteapp
 ```
 
-### Step 2: Activate the Virtual Environment
+### Step 2: Activate Virtual Environment
 ```powershell
 # Windows PowerShell
 .\venv\Scripts\Activate.ps1
@@ -138,89 +145,89 @@ cd e:\projects\Apps\connected\foodwasteapp
 venv\Scripts\activate.bat
 ```
 
-### Step 3: Install Required Dependencies (If not already installed)
+### Step 3: Install Flask (If not already installed)
 ```powershell
-pip install -r requirements.txt
+pip install flask
 ```
 
-### Step 4: Seed Database with Realistic Demonstration Data
-```powershell
-python seed.py
-```
-*(Creates 5 pre-configured accounts across Donors, NGOs, Admin and 6 varied food listings across Available, Claimed, Completed, and Expired states).*
-
-### Step 5: Start the Server
+### Step 4: Run Application
 ```powershell
 python app.py
 ```
-*Or double click the included `run.bat` file.*
+*(On first execution, `food_redistribution.db` is automatically created and populated with 5 realistic Indian campus/banquet records: 3 active with varying urgency, 1 claimed by Hope Shelter with Handover PIN, and 1 expired safety-locked).*
 
-### Step 6: Access the Application
-Open your web browser and navigate to:
+### Step 5: Open Browser
+Navigate to:
 ```
 http://127.0.0.1:5000
 ```
 
 ---
 
-## 5. Sample Demonstration Accounts
+## 5. Sample Seed Records (Pre-Loaded for Instant Demonstration)
 
-For instantaneous academic viva evaluation, use the **top banner quick-persona buttons** or these test credentials:
-
-| Persona | Role | Email | Password |
-|---|---|---|---|
-| **Campus Central Mess (Hostel A)** | Donor | `donor@campus.edu` | `donor123` |
-| **Hope Community Shelter & Food Bank** | Receiver (NGO) | `shelter@hope.org` | `receiver123` |
-| **Prof. K. Venkatesh (Moderator)** | Admin | `admin@foodwaste.org` | `admin123` |
-
----
-
-## 6. IA3 3-Minute Demonstration Script (For Evaluator Walkthrough)
-
-- **Minute 0:00 – 0:45: The Problem & Live Marketplace (`/feed`)**
-  - Point to the live countdown tickers on the cards (e.g. `1h 35m left`).
-  - Demonstrate urgency sorting: items closest to expiration bubble to the top.
-  - Highlight the veg/non-veg indicator, storage requirements (`Hot Insulated >60°C`), and CO2 prevention counter.
-  - Filter by "Available Now" and "Critical (<2h)" to prove real-time query filtering.
-
-- **Minute 0:45 – 1:30: Logging Surplus with Live Preview (`/donate`)**
-  - Switch to **Donor** via the top quick switcher bar.
-  - Navigate to **"Donate Food"**.
-  - Type in a new listing: *"50 Packets Vegetable Pulao"*, enter `20 kg`.
-  - Show the examiner how the **interactive preview card** auto-calculates servings (`~44 meals`) and CO2 emissions prevented (`50 kg CO2e`).
-  - Click **"Publish Donation"** and see it immediately appear at the top of the feed.
-
-- **Minute 1:30 – 2:15: Claiming & Secure Handover PIN (`/feed`)**
-  - Switch to **Hope Shelter (Receiver / NGO)** via the top bar.
-  - Click **"Claim for Distribution"** on an available item.
-  - Show the examiner that a unique **4-digit Handover PIN** (e.g., `7842`) is generated.
-  - Demonstrate the verification form: entering the PIN locks in the handover and transitions status to `Completed`.
-
-- **Minute 2:15 – 3:00: Impact Telemetry & Admin Governance (`/dashboard` & `/admin`)**
-  - Navigate to **"Impact Dashboard"**: explain the cumulative food diverted (kg), meals saved, and CO2 emissions avoided.
-  - Show the dynamic Chart.js doughnut chart breaking down categories (Cooked meals vs Bakery).
-  - Open **"Admin Console"**: show institutional verification toggles and listings audit table.
+1. **Active (High Urgency - `< 2h` remaining):**  
+   *Steamed Basmati Rice, Paneer Butter Masala & 80 Rotis* — Campus Central Mess (28.5 kg, 60 meals, Hot Insulated `>60°C`).
+2. **Active (Safe Window - `~5.5h` remaining):**  
+   *Assorted Multi-Grain Breads, Vegetable Puffs & Sandwiches* — Grand Royal Banquet (14 kg, 40 meals, Room Temp / Dry).
+3. **Active (Non-Veg Event Surplus - `~3.5h` remaining):**  
+   *Hyderabadi Chicken Dum Biryani & Mirchi Ka Salan* — Grand Royal Banquet (35 kg, 75 meals, Hot Insulated `>60°C`).
+4. **Claimed (In-Transit Handover):**  
+   *Mixed Vegetable Khichdi, Tadka Dal & Sweet Kesari* — Campus Central Mess (22 kg, 50 meals, Claimed by *Hope Community Shelter*, PIN: `7842`).
+5. **Expired (Automated Safety Lockout Demonstration):**  
+   *Cream of Mushroom Soup & Garlic Herb Crostini* — Decommissioned listing showing automated claim prevention.
 
 ---
 
-## 7. Viva Q&A Guide (Examiner Anticipated Questions & Answers)
+## 6. IA3 3-Minute Live Walkthrough Script (For Evaluator Defense)
 
-### Q1: How does your platform handle food safety and legal liability if donated food spoils?
-**Answer:** The system implements a three-tier safety framework:
-1. **Automated Expiry Lockout:** When `datetime.now() > expires_at`, the platform automatically marks the item `Expired` and blocks claims.
-2. **Cold-Chain & Storage Metadata:** Donors must specify storage conditions (Hot Insulated `>60°C`, Chilled `4°C`, or Room Temp). Receivers are informed of storage requirements prior to claim.
-3. **Handover Verification:** The 4-digit PIN protocol establishes digital chain-of-custody, logging the exact timestamp when responsibility transitions from donor to receiver.
+- **Minute 0:00 – 0:45: The Problem & Live Marketplace**
+  - Point out the **Impact Metrics Bar** (`55 kg CO₂e avoided`, `22 kg diverted`, `50 meals rescued`).
+  - Demonstrate the live urgency badges on cards (`Urgent 1h 35m left`, `Safe 5h left`). Explain how items closest to expiration automatically bubble to the top.
+  - Toggle the filters: **Pure Veg**, **Urgent (< 2h)**, and **Claimed / In-Transit** to showcase instant Alpine reactive filtering.
 
-### Q2: What prevents multiple NGOs from racing to claim the same food listing simultaneously?
-**Answer:** In the database layer, transactions utilize atomic status transitions. When a claim request is received, the backend executes an isolated lookup verifying `status == 'Available'`. If another thread has committed a claim, subsequent requests fail validation and return an alert message. In production PostgreSQL/MySQL, this is further protected with row-level locks (`SELECT FOR UPDATE`).
+- **Minute 0:45 – 1:30: Role Switcher & Logging Surplus as a Donor**
+  - Click the **"Mess Donor"** pill in the top navigation bar.
+  - Click **"+ Log Surplus Food"** to open the frosted modal.
+  - Fill in a realistic mess surplus: *"Jeera Rice & Chana Masala"*, select *Cooked Meal*, enter *18 kg* with a *3.5 hour* window.
+  - Click **"Broadcast to Redistribution Feed"**. Point out the glassmorphic toast notification and watch the new item immediately appear at the top of the feed grid.
 
-### Q3: How was the CO₂ emissions avoidance metric derived?
-**Answer:** We follow the standard environmental index benchmarked by the Food and Agriculture Organization (FAO) and UNEP: **1 kg of discarded solid food waste contributes approximately 2.5 kg of CO₂ equivalent emissions** when decomposing anaerobically in landfills (producing methane $CH_4$, which has 28x the global warming potential of carbon dioxide).
+- **Minute 1:30 – 2:15: Claiming as an NGO & Handover PIN Protocol**
+  - Switch the top role pill to **"Shelter NGO"**.
+  - On an available item, click **"Claim Food For Rescue"**.
+  - In the claim modal, enter the claimant details (*Hope Community Shelter*) and submit.
+  - Show the evaluator that the card dynamically transitions to **Claimed / Reserved** and displays a cryptographic **4-digit Handover PIN** (e.g. `#6823`).
+  - Click **"Verify Handover PIN & Complete"**. The status changes to **Picked Up**, and the environmental impact counter immediately recalculates.
 
-### Q4: How could this platform scale to city-wide food redistribution?
-**Answer:** 
-1. **Geospatial Proximity Sorting:** Incorporate PostGIS or Haversine formula to sort feed items based on road distance between donor and NGO GPS coordinates.
-2. **Push Notifications:** WebSockets or Firebase Cloud Messaging (FCM) to dispatch immediate alerts to shelters within a 5 km radius when high-urgency cooked food is logged.
-3. **Volunteer Last-Mile Delivery:** Integrate third-party micro-delivery APIs (e.g. Dunzo/Uber Direct) for NGOs lacking dedicated transport vehicles.
-#   f o o d - w a s t e - r e d i s t r i b u t i o n - s y s t e m  
- 
+- **Minute 2:15 – 3:00: Administrative Governance & Audit Ledger**
+  - Click the **"Admin Audit"** role pill.
+  - Show the examiner the **Administrative Food Audit & Governance Ledger** table with all listings, timestamps, and donor organizations.
+  - Demonstrate the **"Purge"** action and the **"Restore Pristine Demo Data"** button, which wipes and reseeds the database with clean records on demand.
+
+---
+
+## 7. Viva Voce Q&A Guide (Examiner Defense)
+
+### Q1: What happens if an NGO claims food but fails to arrive before the expiration window lapses?
+**Answer:** The system runs a dynamic countdown evaluator (`format_listing_row`). Even if an item is marked as `Claimed`, if the physical pickup is not confirmed and `now > expires_at`, the listing dynamically transitions to `Expired` and the PIN becomes void. Additionally, the donor can release the reservation if the NGO's transport vehicle cannot make it within the allotted window.
+
+### Q2: How do you prevent two shelters from claiming the same surplus food at the exact same millisecond (Race Condition)?
+**Answer:** In the SQLite backend (`/api/claim/<id>`), claim execution is wrapped inside a single atomic transactional block:
+```sql
+SELECT status FROM food_listings WHERE id = ?;
+UPDATE food_listings SET status = 'Claimed', claim_pin = ? WHERE id = ? AND status = 'Available';
+```
+If two requests execute concurrently, only the first request matches `status = 'Available'` and updates the row (`cursor.rowcount == 1`). The second request fails with HTTP 400 (`"Item is already claimed"`). In high-concurrency production deployments (PostgreSQL), row-level locks (`SELECT FOR UPDATE`) or Redis distributed locks would be employed.
+
+### Q3: What is the scientific basis of your CO₂ avoidance calculation formula?
+**Answer:** We utilize the standardized environmental benchmark published by the **UN Food and Agriculture Organization (FAO)** and **UNEP (Food Waste Index Report)**:  
+When 1 kg of solid edible food waste decomposes anaerobically in municipal landfills, it generates methane ($CH_4$), a greenhouse gas with 28 times the Global Warming Potential (GWP) of carbon dioxide. Averaged across mixed food groups (cereals, legumes, cooked vegetables, and dairy), **diverting 1 kg of food waste directly prevents approximately 2.5 kg of CO₂ equivalent emissions**.
+
+### Q4: Why did you choose Light Glassmorphism rather than dark mode or standard templates?
+**Answer:** Food redistribution and sustainability applications demand visual trust, cleanliness, and clinical clarity. Generic dark-mode "crypto/cyberpunk" aesthetics convey developer laziness and fatigue the eyes of daytime mess coordinators and NGO dispatchers. Ultra-clean light glassmorphism (`#f8fafc`, 72% translucent frosted panels, 1px hairline borders, and soft mint/sky refraction orbs) provides a modern, tactile, human-crafted enterprise feel with high contrast and accessible readability.
+
+### Q5: How does this system scale to municipal or multi-campus deployments?
+**Answer:**
+1. **Geospatial Proximity Queries:** Integrating spatial coordinates (latitude/longitude) with the Haversine formula or PostGIS to filter available lots within a 5 km or 10 km radius of the claiming NGO.
+2. **Push Dispatch:** Integrating WebSockets or Firebase Cloud Messaging (FCM) to push urgent alerts (<2h expiry) directly to drivers' mobile devices.
+3. **Automated Volunteer Routing:** API hooks into crowd-sourced delivery fleets to automate the physical transit leg when recipient shelters lack dedicated logistics vehicles.
