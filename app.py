@@ -612,6 +612,75 @@ def api_complete(id):
     })
 
 
+@app.route('/api/listing/<int:id>/extend', methods=['POST'])
+def api_extend_listing(id):
+    """Mess Donor operations: extend safety window if food is maintained under thermal holding."""
+    data = request.get_json() or {}
+    minutes = int(data.get('minutes', 45))
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT expires_at, status FROM food_listings WHERE id = ?", (id,))
+    row = cursor.fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Listing not found.'}), 404
+
+    try:
+        current_exp = datetime.strptime(row['expires_at'], "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        current_exp = datetime.now()
+
+    new_exp = max(datetime.now(), current_exp) + timedelta(minutes=minutes)
+    new_exp_str = new_exp.strftime("%Y-%m-%d %H:%M:%S")
+
+    new_status = 'Available' if row['status'] == 'Expired' else row['status']
+    cursor.execute("UPDATE food_listings SET expires_at = ?, status = ? WHERE id = ?", (new_exp_str, new_status, id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'message': f"Safety consumption window extended by +{minutes} minutes (New expiry: {new_exp_str}).",
+        'new_expires_at': new_exp_str
+    })
+
+
+@app.route('/api/listing/<int:id>/cancel-claim', methods=['POST'])
+def api_cancel_claim(id):
+    """Mess Donor operations: release reservation if NGO transport vehicle cannot make the pickup window."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT status FROM food_listings WHERE id = ?", (id,))
+    row = cursor.fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Listing not found.'}), 404
+
+    if row['status'] != 'Claimed':
+        conn.close()
+        return jsonify({'success': False, 'message': 'Listing is not in claimed state.'}), 400
+
+    cursor.execute('''
+        UPDATE food_listings
+        SET status = 'Available',
+            claim_pin = NULL,
+            claimed_by_org = NULL,
+            claimed_by_contact = NULL,
+            claimed_at = NULL
+        WHERE id = ?
+    ''', (id,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'message': "Reservation released! Food lot returned to live public redistribution feed."
+    })
+
+
 @app.route('/api/delete/<int:id>', methods=['POST'])
 def api_delete(id):
     """Admin moderation: remove or purge an entry."""
