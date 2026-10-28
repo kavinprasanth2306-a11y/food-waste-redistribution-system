@@ -1337,19 +1337,39 @@
                                 </div>
                             </button>
 
-                            <!-- Volunteer Card -->
-                            <button type="button" @click="profileForm.role = 'admin'"
-                                    :class="profileForm.role === 'admin' ? 'border-blue-500 bg-blue-50/70 ring-2 ring-blue-500/20' : 'border-slate-200 bg-white/70 hover:border-slate-300'"
-                                    class="p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between">
-                                <div class="flex items-center justify-between mb-1">
-                                    <i data-lucide="shield-check" class="w-4 h-4 text-blue-600"></i>
-                                    <span x-show="profileForm.role === 'admin'" class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <!-- Platform Audit Card (Only for kavinprasanth2306@gmail.com) -->
+                            <template x-if="isAdminUser">
+                                <button type="button" @click="profileForm.role = 'admin'"
+                                        :class="profileForm.role === 'admin' ? 'border-blue-500 bg-blue-50/70 ring-2 ring-blue-500/20' : 'border-slate-200 bg-white/70 hover:border-slate-300'"
+                                        class="p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <i data-lucide="shield-check" class="w-4 h-4 text-blue-600"></i>
+                                        <span x-show="profileForm.role === 'admin'" class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-800 text-[11px] flex items-center gap-1">
+                                            <span>Platform Audit</span>
+                                            <span class="text-[9px] bg-blue-100 text-blue-700 font-bold px-1 rounded">SUPER</span>
+                                        </div>
+                                        <div class="text-[10px] text-slate-500 leading-tight">Super Admin View</div>
+                                    </div>
+                                </button>
+                            </template>
+
+                            <template x-if="!isAdminUser">
+                                <div @click="showToast('Platform Audit is strictly reserved for kavinprasanth2306@gmail.com')"
+                                     class="p-2.5 rounded-xl border border-dashed border-slate-300 bg-slate-50/80 text-left flex flex-col justify-between opacity-60 cursor-not-allowed transition-all"
+                                     title="Admin Audit is restricted to kavinprasanth2306@gmail.com">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <i data-lucide="lock" class="w-4 h-4 text-slate-400"></i>
+                                        <span class="text-[9px] bg-slate-200 text-slate-600 font-bold px-1.5 py-0.5 rounded">LOCKED</span>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-500 text-[11px]">Platform Audit</div>
+                                        <div class="text-[10px] text-slate-400 leading-tight">Admin Only</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold text-slate-800 text-[11px]">Platform Audit</div>
-                                    <div class="text-[10px] text-slate-500 leading-tight">Moderator View</div>
-                                </div>
-                            </button>
+                            </template>
 
                         </div>
                     </div>
@@ -1453,6 +1473,7 @@
     <script>
         function foodApp() {
             return {
+                superAdminEmail: 'kavinprasanth2306@gmail.com',
                 currentRole: 'receiver',
                 activeFilter: 'all',
                 searchQuery: '',
@@ -1505,6 +1526,10 @@
                     message: ''
                 },
 
+                get isAdminUser() {
+                    return !!(this.currentUser && this.currentUser.email && this.currentUser.email.trim().toLowerCase() === this.superAdminEmail.toLowerCase());
+                },
+
                 initApp() {
                     window.activeRole = this.currentRole;
                     window.addEventListener('open-auth-help-modal', () => {
@@ -1527,10 +1552,10 @@
                             displayName: 'Dr. Kavin Prasanth',
                             email: 'kavinprasanth2306@gmail.com',
                             photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80',
-                            role: this.currentRole,
-                            organization: this.currentRole === 'donor' ? 'Campus Central Mess (Hostel A)' : 'Hope Community Shelter',
-                            phone: '+91 98765 43210',
-                            address: 'Campus Dining Loading Dock Gate 2'
+                            role: 'admin',
+                            organization: 'University Food Safety & Redistribution Board',
+                            phone: '+91 99222 33445',
+                            address: 'Faculty IT Complex, Admin Block'
                         }
                     });
                     this.openAuthHelpModal = false;
@@ -1558,12 +1583,26 @@
                 handleAuthUpdate(detail) {
                     if (detail && detail.loggedIn) {
                         this.currentUser = detail.user;
+                        const isSuperAdmin = !!(this.currentUser.email && this.currentUser.email.trim().toLowerCase() === this.superAdminEmail.toLowerCase());
+                        
                         this.profileForm.name = this.currentUser.displayName || '';
                         this.profileForm.email = this.currentUser.email || '';
-                        this.profileForm.role = this.currentUser.role || this.currentRole || 'receiver';
-                        this.profileForm.organization = this.currentUser.organization || (this.profileForm.role === 'donor' ? `${this.currentUser.displayName}'s Kitchen` : 'Hope Community Shelter');
-                        this.profileForm.phone = this.currentUser.phone || '+91 98450 12345';
-                        this.profileForm.address = this.currentUser.address || 'Campus Dining Loading Dock Gate 1';
+                        
+                        if (isSuperAdmin) {
+                            this.profileForm.role = 'admin';
+                            this.currentRole = 'admin';
+                            this.profileForm.organization = this.currentUser.organization || 'University Food Safety & Redistribution Board';
+                            this.profileForm.phone = this.currentUser.phone || '+91 99222 33445';
+                            this.profileForm.address = this.currentUser.address || 'Faculty IT Complex, Admin Block';
+                        } else {
+                            this.profileForm.role = (this.currentUser.role === 'admin') ? 'receiver' : (this.currentUser.role || 'receiver');
+                            if (this.currentRole === 'admin') {
+                                this.currentRole = 'receiver';
+                            }
+                            this.profileForm.organization = this.currentUser.organization || (this.profileForm.role === 'donor' ? `${this.currentUser.displayName}'s Kitchen` : 'Hope Community Shelter');
+                            this.profileForm.phone = this.currentUser.phone || '+91 98450 12345';
+                            this.profileForm.address = this.currentUser.address || 'Campus Dining Loading Dock Gate 1';
+                        }
 
                         if (detail.triggerConsent) {
                             this.openConsentModal = true;
@@ -1579,6 +1618,9 @@
                         this.showToast(`Signed in with Google as ${this.currentUser.displayName}!`);
                     } else {
                         this.currentUser = null;
+                        if (this.currentRole === 'admin') {
+                            this.currentRole = 'receiver';
+                        }
                         this.openConsentModal = false;
                         this.openProfileModal = false;
                         this.showToast("Signed out of Google account.");
@@ -1594,6 +1636,12 @@
                 },
 
                 async saveProfile() {
+                    if (this.profileForm.role === 'admin' && !this.isAdminUser) {
+                        this.showToast(`🔒 Access Denied: Admin Audit is restricted to ${this.superAdminEmail}`);
+                        this.profileForm.role = 'receiver';
+                        return;
+                    }
+
                     this.isSavingProfile = true;
                     try {
                         const res = await fetch('/api/user/update-profile', {
@@ -1635,6 +1683,10 @@
                 },
 
                 switchRole(role) {
+                    if (role === 'admin' && !this.isAdminUser) {
+                        this.showToast(`🔒 Access Denied: Admin Audit is restricted to ${this.superAdminEmail}`);
+                        return;
+                    }
                     this.currentRole = role;
                     window.activeRole = role;
                     this.showToast(`Switched active view to ${role.toUpperCase()}.`);
