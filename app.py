@@ -431,12 +431,16 @@ def api_google_sync():
         user_id = user['id']
         assigned_role = user['role']
         org = user['organization']
+        phone = user['phone'] if 'phone' in user.keys() else '+91 98765 00000'
+        address = user['address'] if 'address' in user.keys() else 'Campus Dining Dock 1'
     else:
-        org = "Google Verified Entity" if role == 'donor' else "Community Volunteer Shelter"
+        org = "Campus Dining Complex" if role == 'donor' else "Hope Community Shelter"
+        phone = "+91 98765 43210"
+        address = "Campus Dining Loading Dock Gate 2"
         cursor.execute('''
             INSERT INTO users (name, email, role, organization, phone, address, photo_url, is_verified)
-            VALUES (?, ?, ?, ?, '+91 98000 00000', 'Verified Campus / City Hub', ?, 1)
-        ''', (name, email, role, org, photo_url))
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+        ''', (name, email, role, org, phone, address, photo_url))
         user_id = cursor.lastrowid
         assigned_role = role
 
@@ -451,7 +455,47 @@ def api_google_sync():
             'email': email,
             'role': assigned_role,
             'organization': org,
+            'phone': phone,
+            'address': address,
             'photo_url': photo_url
+        }
+    })
+
+
+@app.route('/api/user/update-profile', methods=['POST'])
+def api_update_profile():
+    """Update profile details (organization, phone, address, role)."""
+    data = request.get_json() or {}
+    email = data.get('email', '').strip()
+    name = data.get('name', '').strip()
+    role = data.get('role', 'receiver').strip()
+    org = data.get('organization', '').strip()
+    phone = data.get('phone', '').strip()
+    address = data.get('address', '').strip()
+
+    if not email:
+        return jsonify({'success': False, 'message': 'Email is required.'}), 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE users 
+        SET name = ?, role = ?, organization = ?, phone = ?, address = ?
+        WHERE email = ?
+    ''', (name, role, org, phone, address, email))
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'message': 'Profile settings updated successfully!',
+        'user': {
+            'name': name,
+            'email': email,
+            'role': role,
+            'organization': org,
+            'phone': phone,
+            'address': address
         }
     })
 

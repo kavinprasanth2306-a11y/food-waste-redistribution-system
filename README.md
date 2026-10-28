@@ -231,4 +231,5 @@ When 1 kg of solid edible food waste decomposes anaerobically in municipal landf
 1. **Geospatial Proximity Queries:** Integrating spatial coordinates (latitude/longitude) with the Haversine formula or PostGIS to filter available lots within a 5 km or 10 km radius of the claiming NGO.
 2. **Push Dispatch:** Integrating WebSockets or Firebase Cloud Messaging (FCM) to push urgent alerts (<2h expiry) directly to drivers' mobile devices.
 3. **Automated Volunteer Routing:** API hooks into crowd-sourced delivery fleets to automate the physical transit leg when recipient shelters lack dedicated logistics vehicles.#   f o o d - w a s t e - r e d i s t r i b u t i o n - s y s t e m  
+ #   f o o d - w a s t e - r e d i s t r i b u t i o n - s y s t e m  
  
