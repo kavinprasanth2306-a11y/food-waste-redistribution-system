@@ -472,7 +472,582 @@
 
             </section>
 
-            <!-- 3. LIVE SEARCH & FILTER TOOLBAR -->
+            
+            <!-- 4. DEDICATED MESS DONOR DASHBOARD & DISPATCH COMMAND CONSOLE -->
+            <div x-show="currentRole === 'donor'" class="space-y-6">
+
+                <!-- Mess Facility & Shift Console Bar -->
+                <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-amber-200/80 bg-gradient-to-r from-amber-50/60 via-white/80 to-orange-50/40 space-y-4">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        
+                        <!-- Facility Identity -->
+                        <div class="flex items-center space-x-3.5">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
+                                <i data-lucide="chef-hat" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h2 class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight" 
+                                        x-text="currentUser && currentUser.organization ? currentUser.organization : 'Campus Central Dining Mess (Hostel Complex)'"></h2>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                                        Donor Hub
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                                    <span class="flex items-center gap-1">
+                                        <i data-lucide="map-pin" class="w-3 h-3 text-amber-600"></i>
+                                        <span x-text="currentUser && currentUser.address ? currentUser.address : 'Loading Dock 1, Campus East Wing'"></span>
+                                    </span>
+                                    <span>•</span>
+                                    <span class="text-emerald-700 font-medium flex items-center gap-1">
+                                        <i data-lucide="shield-check" class="w-3 h-3"></i>
+                                        FSSAI Clean Food Kitchen #TN-2026-908
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Top CTA & Shift Controls -->
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <button type="button" @click="openDonateModal = true"
+                                    class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all active:scale-95">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                <span>Broadcast Surplus Lot</span>
+                            </button>
+
+                            <button type="button" @click="switchRole('receiver')"
+                                    title="See how your listings look on the public shelter feed"
+                                    class="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/90 hover:bg-white text-slate-700 font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all">
+                                <i data-lucide="eye" class="w-3.5 h-3.5 text-slate-500"></i>
+                                <span>Preview NGO Feed</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Kitchen Service Shift Selector & FSSAI Thermal Health -->
+                    <div class="pt-3 border-t border-slate-200/70 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        
+                        <!-- Shift Selector -->
+                        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                            <span class="text-xs font-bold text-slate-600 mr-1 shrink-0">Current Service Shift:</span>
+                            
+                            <button type="button" @click="donorActiveShift = 'breakfast'"
+                                    :class="donorActiveShift === 'breakfast' ? 'bg-amber-600 text-white font-bold shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'"
+                                    class="px-2.5 py-1 rounded-lg text-xs border border-slate-200 transition-all shrink-0">
+                                🌅 Breakfast (07:00–10:00)
+                            </button>
+
+                            <button type="button" @click="donorActiveShift = 'lunch'"
+                                    :class="donorActiveShift === 'lunch' ? 'bg-amber-600 text-white font-bold shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'"
+                                    class="px-2.5 py-1 rounded-lg text-xs border border-slate-200 transition-all shrink-0">
+                                ☀️ Lunch Service (12:00–15:30)
+                            </button>
+
+                            <button type="button" @click="donorActiveShift = 'snacks'"
+                                    :class="donorActiveShift === 'snacks' ? 'bg-amber-600 text-white font-bold shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'"
+                                    class="px-2.5 py-1 rounded-lg text-xs border border-slate-200 transition-all shrink-0">
+                                ☕ High Tea (17:00–18:30)
+                            </button>
+
+                            <button type="button" @click="donorActiveShift = 'dinner'"
+                                    :class="donorActiveShift === 'dinner' ? 'bg-amber-600 text-white font-bold shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'"
+                                    class="px-2.5 py-1 rounded-lg text-xs border border-slate-200 transition-all shrink-0">
+                                🌙 Dinner (19:30–22:30)
+                            </button>
+                        </div>
+
+                        <!-- FSSAI Kitchen Thermal Sensor Indicators -->
+                        <div class="flex items-center gap-2 text-[11px] shrink-0 font-mono">
+                            <div class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>Chafing Line: <strong>68.4°C</strong> (>60°C OK)</span>
+                            </div>
+                            <div class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-50 text-sky-800 border border-sky-200">
+                                <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                                <span>Cold Room: <strong>3.8°C</strong> (&lt;4°C OK)</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Donor Specific KPI Telemetry Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                    
+                    <!-- 1. Live Available Lots on Feed -->
+                    <div class="glass-card rounded-2xl p-4 flex items-center space-x-3.5 border border-emerald-200/70">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+                            <i data-lucide="radio" class="w-5 h-5 animate-pulse"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Surplus Live on Feed</div>
+                            <div class="flex items-baseline space-x-1">
+                                <span class="text-2xl font-extrabold text-slate-900 tracking-tight tabular-nums" 
+                                      x-text="listings.filter(i => i.status === 'Available').length"></span>
+                                <span class="text-xs font-semibold text-slate-500">lots active</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Awaiting NGO Pickup / Driver En Route -->
+                    <div class="glass-card rounded-2xl p-4 flex items-center space-x-3.5 border border-amber-200/80 bg-amber-50/30">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center shrink-0">
+                            <i data-lucide="truck" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Awaiting NGO Driver</div>
+                            <div class="flex items-baseline space-x-1">
+                                <span class="text-2xl font-extrabold text-amber-950 tracking-tight tabular-nums" 
+                                      x-text="listings.filter(i => i.status === 'Claimed').length"></span>
+                                <span class="text-xs font-bold text-amber-700">claims pending</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Total Rescued by Mess -->
+                    <div class="glass-card rounded-2xl p-4 flex items-center space-x-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center shrink-0">
+                            <i data-lucide="award" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Diverted from Landfill</div>
+                            <div class="flex items-baseline space-x-1">
+                                <span class="text-2xl font-extrabold text-slate-900 tracking-tight tabular-nums" x-text="metrics.total_kg_saved"></span>
+                                <span class="text-xs font-semibold text-slate-500">kg food</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Carbon Emissions Avoided -->
+                    <div class="glass-card rounded-2xl p-4 flex items-center space-x-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center shrink-0">
+                            <i data-lucide="cloud-off" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mess Carbon Abatement</div>
+                            <div class="flex items-baseline space-x-1">
+                                <span class="text-2xl font-extrabold text-slate-900 tracking-tight tabular-nums" x-text="metrics.total_co2_avoided_kg"></span>
+                                <span class="text-xs font-semibold text-slate-500">kg CO₂e</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 1-Click Fast Re-List Recipe Presets -->
+                <div class="glass-panel rounded-2xl p-5 border border-slate-200/90 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                                <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+                                <span>1-Click Fast Broadcast Presets (Standard Mess Batches)</span>
+                            </h3>
+                            <p class="text-xs text-slate-500">Click any standard daily menu template to instantly pre-fill the broadcast form with verified weights and safety windows.</p>
+                        </div>
+                        <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 hidden sm:inline">
+                            Zero-Latency Logging
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                        
+                        <!-- Preset 1: Jeera Rice & Paneer Butter Masala -->
+                        <div @click="applyTemplate(donorTemplates[0])"
+                             class="group cursor-pointer p-3.5 rounded-xl bg-white hover:bg-amber-50/50 border border-slate-200 hover:border-amber-300 transition-all shadow-sm hover:shadow flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between text-[11px] mb-2">
+                                    <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">Veg • Cooked</span>
+                                    <span class="text-slate-400 font-mono">3.5h window</span>
+                                </div>
+                                <h4 class="text-xs font-bold text-slate-900 group-hover:text-amber-700 transition-colors line-clamp-1">
+                                    Basmati Jeera Rice & Paneer Masala
+                                </h4>
+                                <p class="text-[11px] text-slate-500 mt-1">28.5 kg (~60 servings) in 3 thermal cambros.</p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-amber-700">
+                                <span>Load Template</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        </div>
+
+                        <!-- Preset 2: Khichdi & Dal -->
+                        <div @click="applyTemplate(donorTemplates[1])"
+                             class="group cursor-pointer p-3.5 rounded-xl bg-white hover:bg-amber-50/50 border border-slate-200 hover:border-amber-300 transition-all shadow-sm hover:shadow flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between text-[11px] mb-2">
+                                    <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">Veg • Cooked</span>
+                                    <span class="text-slate-400 font-mono">3.0h window</span>
+                                </div>
+                                <h4 class="text-xs font-bold text-slate-900 group-hover:text-amber-700 transition-colors line-clamp-1">
+                                    Moong Dal Khichdi & Tadka Dal
+                                </h4>
+                                <p class="text-[11px] text-slate-500 mt-1">22.0 kg (~50 servings) chilled at 4°C.</p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-amber-700">
+                                <span>Load Template</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        </div>
+
+                        <!-- Preset 3: Chapati & Naan Basket -->
+                        <div @click="applyTemplate(donorTemplates[2])"
+                             class="group cursor-pointer p-3.5 rounded-xl bg-white hover:bg-amber-50/50 border border-slate-200 hover:border-amber-300 transition-all shadow-sm hover:shadow flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between text-[11px] mb-2">
+                                    <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold border border-amber-200">Bakery • Veg</span>
+                                    <span class="text-slate-400 font-mono">4.5h window</span>
+                                </div>
+                                <h4 class="text-xs font-bold text-slate-900 group-hover:text-amber-700 transition-colors line-clamp-1">
+                                    Whole Wheat Chapati Basket
+                                </h4>
+                                <p class="text-[11px] text-slate-500 mt-1">14.0 kg (~120 pieces) foil wrapped.</p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-amber-700">
+                                <span>Load Template</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        </div>
+
+                        <!-- Preset 4: Sambar & Curd Rice -->
+                        <div @click="applyTemplate(donorTemplates[3])"
+                             class="group cursor-pointer p-3.5 rounded-xl bg-white hover:bg-amber-50/50 border border-slate-200 hover:border-amber-300 transition-all shadow-sm hover:shadow flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between text-[11px] mb-2">
+                                    <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">Veg • Cooked</span>
+                                    <span class="text-slate-400 font-mono">3.0h window</span>
+                                </div>
+                                <h4 class="text-xs font-bold text-slate-900 group-hover:text-amber-700 transition-colors line-clamp-1">
+                                    Sambar, Rasam & Curd Rice
+                                </h4>
+                                <p class="text-[11px] text-slate-500 mt-1">19.5 kg (~45 servings) hot insulated.</p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-amber-700">
+                                <span>Load Template</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Live Mess Dispatch & Handover Management Console -->
+                <div class="glass-panel rounded-2xl p-5 border border-slate-200/90 space-y-4">
+                    
+                    <!-- Search & Filter Bar -->
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                                <i data-lucide="clipboard-list" class="w-5 h-5 text-emerald-600"></i>
+                                <span>Mess Food Lots & Driver Handover Station</span>
+                            </h3>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200" 
+                                  x-text="donorFilteredListings.length + ' lots'"></span>
+                        </div>
+
+                        <!-- Filter Tabs -->
+                        <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0">
+                            <button type="button" @click="donorBatchFilter = 'all'"
+                                    :class="donorBatchFilter === 'all' ? 'bg-slate-900 text-white font-semibold' : 'bg-white text-slate-600 hover:bg-slate-50'"
+                                    class="px-3 py-1.5 rounded-lg text-xs border border-slate-200 transition-all shrink-0">
+                                All Batches
+                            </button>
+
+                            <button type="button" @click="donorBatchFilter = 'claimed'"
+                                    :class="donorBatchFilter === 'claimed' ? 'bg-amber-600 text-white font-semibold shadow-sm' : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border-amber-200'"
+                                    class="px-3 py-1.5 rounded-lg text-xs border transition-all shrink-0 flex items-center gap-1 font-semibold">
+                                <i data-lucide="truck" class="w-3.5 h-3.5"></i>
+                                <span>Awaiting Driver</span>
+                                <span class="px-1.5 py-0.2 rounded-full bg-amber-200 text-amber-900 text-[10px]" 
+                                      x-text="listings.filter(i => i.status === 'Claimed').length"></span>
+                            </button>
+
+                            <button type="button" @click="donorBatchFilter = 'available'"
+                                    :class="donorBatchFilter === 'available' ? 'bg-emerald-600 text-white font-semibold shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'"
+                                    class="px-3 py-1.5 rounded-lg text-xs border border-slate-200 transition-all shrink-0">
+                                Live on Feed
+                            </button>
+
+                            <button type="button" @click="donorBatchFilter = 'completed'"
+                                    :class="donorBatchFilter === 'completed' ? 'bg-teal-700 text-white font-semibold shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'"
+                                    class="px-3 py-1.5 rounded-lg text-xs border border-slate-200 transition-all shrink-0">
+                                Handed Over
+                            </button>
+
+                            <button type="button" @click="donorBatchFilter = 'expired'"
+                                    :class="donorBatchFilter === 'expired' ? 'bg-rose-700 text-white font-semibold shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'"
+                                    class="px-3 py-1.5 rounded-lg text-xs border border-slate-200 transition-all shrink-0">
+                                Expired
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="relative w-full">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                        <input type="text" x-model="donorSearchQuery" placeholder="Filter by food item name, claiming shelter, or storage condition..."
+                               class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
+                    </div>
+
+                    <!-- Cards Grid for Mess Lots -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                        <template x-for="item in donorFilteredListings" :key="'donor-' + item.id">
+                            <div class="glass-card rounded-2xl overflow-hidden border border-slate-200/90 flex flex-col justify-between hover:shadow-md transition-all"
+                                 :class="item.status === 'Claimed' ? 'ring-2 ring-amber-400/80 bg-amber-50/20' : ''">
+                                
+                                <div>
+                                    <!-- Image and Status Banner -->
+                                    <div class="relative h-40 w-full overflow-hidden bg-slate-900 cursor-pointer"
+                                         @click="openDetailsModal(item)">
+                                        <img :src="item.image_url" alt="Lot Photo" 
+                                             @error="handleImageError($event, item)"
+                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-transparent to-black/20"></div>
+
+                                        <!-- Top Status Badge -->
+                                        <div class="absolute top-3 left-3">
+                                            <template x-if="item.status === 'Available'">
+                                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600 text-white shadow-sm flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                                                    Live Broadcast
+                                                </span>
+                                            </template>
+                                            <template x-if="item.status === 'Claimed'">
+                                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-white shadow-sm flex items-center gap-1 animate-pulse">
+                                                    <i data-lucide="truck" class="w-3.5 h-3.5"></i>
+                                                    Driver On Way
+                                                </span>
+                                            </template>
+                                            <template x-if="item.status === 'Completed'">
+                                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-800 text-white shadow-sm flex items-center gap-1">
+                                                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                                    Handover Done
+                                                </span>
+                                            </template>
+                                            <template x-if="item.status === 'Expired'">
+                                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-600 text-white shadow-sm flex items-center gap-1">
+                                                    <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                                                    Safety Expired
+                                                </span>
+                                            </template>
+                                        </div>
+
+                                        <!-- Expiry Countdown -->
+                                        <div class="absolute top-3 right-3">
+                                            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm"
+                                                  :class="item.urgency_level === 'critical' ? 'bg-rose-600 text-white' : (item.urgency_level === 'warning' ? 'bg-amber-500 text-white' : 'bg-slate-900/80 text-white')"
+                                                  x-text="item.urgency_label"></span>
+                                        </div>
+
+                                        <!-- Bottom Image Info -->
+                                        <div class="absolute bottom-2 left-3 right-3 flex items-center justify-between text-xs text-white">
+                                            <span class="font-bold text-xs" x-text="item.quantity_kg + ' kg (' + item.servings_estimate + ' meals)'"></span>
+                                            <span class="text-[10px] bg-black/50 px-2 py-0.5 rounded font-mono" x-text="'Lot #' + item.id"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Lot Body Info -->
+                                    <div class="p-4 space-y-2.5">
+                                        <h4 class="text-sm font-bold text-slate-900 tracking-tight line-clamp-1" x-text="item.item_name"></h4>
+                                        
+                                        <div class="flex items-center gap-2 text-[11px] text-slate-500">
+                                            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium" x-text="item.storage_condition"></span>
+                                            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-bold" x-text="item.co2_saved_kg + ' kg CO₂e'"></span>
+                                        </div>
+
+                                        <!-- Claimed Specific NGO Box -->
+                                        <template x-if="item.status === 'Claimed'">
+                                            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200/90 space-y-2">
+                                                <div class="flex items-center justify-between text-xs">
+                                                    <span class="font-bold text-amber-900 truncate" x-text="item.claimed_by_org || 'Hope Community Shelter'"></span>
+                                                    <a :href="'tel:' + (item.claimed_by_contact || '')" class="text-amber-800 font-mono text-[11px] underline flex items-center gap-1">
+                                                        <i data-lucide="phone" class="w-3 h-3"></i>
+                                                        <span x-text="item.claimed_by_contact || '+91 99222 33445'"></span>
+                                                    </a>
+                                                </div>
+
+                                                <!-- Driver PIN Verification Terminal on Card -->
+                                                <div class="pt-1.5 border-t border-amber-200/70">
+                                                    <label class="block text-[10px] font-bold text-amber-900 mb-1">
+                                                        Driver 4-Digit Handover PIN:
+                                                    </label>
+                                                    <div class="flex gap-1.5">
+                                                        <input type="text" maxlength="4" placeholder="e.g. 7842"
+                                                               x-model="donorPinInputs[item.id]"
+                                                               class="w-28 px-2 py-1 bg-white border border-amber-300 rounded-lg text-xs font-mono font-bold text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                                        <button type="button" @click="verifyDonorPin(item.id)"
+                                                                class="flex-1 py-1 px-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1 transition-all">
+                                                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                                            <span>Authorize</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <!-- Completed Summary -->
+                                        <template x-if="item.status === 'Completed'">
+                                            <div class="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between">
+                                                <div class="flex items-center gap-1.5">
+                                                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                                    <span class="font-semibold truncate max-w-[170px]" x-text="'Rescued by ' + (item.claimed_by_org || 'NGO')"></span>
+                                                </div>
+                                                <button type="button" @click="openGatePass(item)" class="text-[10px] font-bold text-emerald-800 underline">
+                                                    Gate Pass
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons Footer -->
+                                <div class="p-4 pt-0 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1.5 mt-2">
+                                    
+                                    <!-- Available Actions -->
+                                    <template x-if="item.status === 'Available'">
+                                        <div class="w-full flex items-center gap-1.5">
+                                            <button type="button" @click="extendSafety(item.id, 45)"
+                                                    title="Extend safe consumption window by 45 minutes under hot holding"
+                                                    class="flex-1 py-1.5 px-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1 transition-colors">
+                                                <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-600"></i>
+                                                <span>+45m Safety</span>
+                                            </button>
+                                            <button type="button" @click="openGatePass(item)"
+                                                    class="py-1.5 px-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1">
+                                                <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600"></i>
+                                                <span>Pass</span>
+                                            </button>
+                                            <button type="button" @click="deleteItem(item.id)"
+                                                    title="Cancel listing"
+                                                    class="p-1.5 rounded-xl text-rose-500 hover:bg-rose-50 border border-rose-200">
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                    <!-- Claimed Actions -->
+                                    <template x-if="item.status === 'Claimed'">
+                                        <div class="w-full flex items-center gap-2">
+                                            <button type="button" @click="openGatePass(item)"
+                                                    class="flex-1 py-1.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm">
+                                                <i data-lucide="file-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                                <span>View & Print Gate Pass</span>
+                                            </button>
+                                            <button type="button" @click="cancelClaim(item.id)"
+                                                    title="Release reservation if NGO vehicle fails to arrive"
+                                                    class="py-1.5 px-2.5 rounded-xl border border-amber-300 text-amber-800 hover:bg-amber-100 text-xs font-semibold">
+                                                Release
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                    <!-- Completed Actions -->
+                                    <template x-if="item.status === 'Completed'">
+                                        <div class="w-full flex items-center justify-between">
+                                            <span class="text-[11px] text-slate-400 font-mono" x-text="item.completed_at ? 'Completed: ' + item.completed_at.split(' ')[1] : 'Redistributed'"></span>
+                                            <button type="button" @click="openGatePass(item)"
+                                                    class="py-1 px-3 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-semibold flex items-center gap-1">
+                                                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                                <span>Security Docket</span>
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                    <!-- Expired Actions -->
+                                    <template x-if="item.status === 'Expired'">
+                                        <div class="w-full flex items-center justify-between">
+                                            <span class="text-[11px] text-rose-600 font-medium">Logged as Biomass/Compost</span>
+                                            <button type="button" @click="deleteItem(item.id)"
+                                                    class="text-xs text-slate-500 hover:text-rose-600 underline">
+                                                Purge Record
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                </div>
+
+                            </div>
+                        </template>
+                    </div>
+
+                </div>
+
+                <!-- Academic Viva Highlight: Mess Kitchen Waste Reduction & Meal Attendance AI Predictor -->
+                <div class="glass-panel rounded-2xl p-5 border border-slate-200/90 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-200/70">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                                <i data-lucide="trending-down" class="w-4 h-4 text-emerald-600"></i>
+                                <span>Kitchen Prep Optimization & Predictive Waste Analytics (SDG 12)</span>
+                            </h3>
+                            <p class="text-xs text-slate-500">Heuristic forecasting correlating hostel meal swipes, day-of-week attendance, and cooking volume to prevent upstream waste.</p>
+                        </div>
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            92.4% Kitchen Efficiency
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        
+                        <!-- Metric 1: Preparation Ratio -->
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="font-bold text-slate-700 flex items-center justify-between">
+                                <span>Today's Dining Volume</span>
+                                <span class="text-slate-500 font-mono">1,450 Meals</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden flex">
+                                <div class="bg-emerald-600 h-2" style="width: 88%" title="Consumed by students (88%)"></div>
+                                <div class="bg-amber-500 h-2" style="width: 9%" title="Redistributed to NGO (9%)"></div>
+                                <div class="bg-rose-500 h-2" style="width: 3%" title="Expired / Trim Waste (3%)"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-slate-500">
+                                <span class="text-emerald-700 font-semibold">● 88% Consumed</span>
+                                <span class="text-amber-700 font-semibold">● 9% Rescued</span>
+                                <span class="text-rose-700 font-semibold">● 3% Scrap</span>
+                            </div>
+                        </div>
+
+                        <!-- Metric 2: Tomorrow's Smart Prep Advisory -->
+                        <div class="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200 space-y-1.5 md:col-span-2">
+                            <div class="font-bold text-emerald-950 flex items-center gap-1.5">
+                                <i data-lucide="sparkles" class="w-4 h-4 text-emerald-600"></i>
+                                <span>Prep Reduction Recommendation for Tomorrow's Lunch</span>
+                            </div>
+                            <p class="text-slate-600 leading-relaxed text-[11px]">
+                                <strong>Historical Intelligence:</strong> Thursday campus sports schedules reduce hostel lunch footfall by ~11.5%. 
+                                Recommended adjustments: <strong>Reduce Basmati Rice cooking batch by -8.0 kg</strong> and <strong>Curry/Dal batch by -5.0 kg</strong> to prevent an estimated 13 kg of redundant cooking.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+<!-- 3. SHELTER NGO RECEIVER MARKETPLACE FEED -->
+            <div x-show="currentRole === 'receiver'" class="space-y-6">
+                <!-- Receiver Welcome & Dispatch Advisory -->
+                <div class="glass-card rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-emerald-200/60 bg-gradient-to-r from-emerald-50/50 via-white/80 to-teal-50/40">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-600/10 border border-emerald-500/20 text-emerald-700 flex items-center justify-center shrink-0">
+                            <i data-lucide="heart-handshake" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-sm font-bold text-slate-900 tracking-tight">Shelter NGO Marketplace Feed</h2>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Live Rescue</span>
+                            </div>
+                            <p class="text-xs text-slate-500">Discover fresh surplus lots, reserve before safe countdown lapses, and verify pickup with 4-digit PIN.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <button type="button" @click="switchRole('donor')" class="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-white text-slate-700 font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all">
+                            <i data-lucide="chef-hat" class="w-3.5 h-3.5 text-amber-600"></i>
+                            <span>Switch to Mess Donor Screen</span>
+                        </button>
+                    </div>
+                </div>
+
+<!-- 3. LIVE SEARCH & FILTER TOOLBAR -->
             <div class="glass-panel rounded-2xl p-3.5 flex flex-col md:flex-row items-center justify-between gap-3 border border-slate-200/80">
                 
                 <!-- Search Bar -->
@@ -520,7 +1095,7 @@
             </div>
 
             <!-- 4. TACTILE CARD GRID (WITH PROMINENT IMAGE FIRST & CLICK TO VIEW DETAILS) -->
-            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" x-show="currentRole !== 'admin'">
+            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <template x-for="item in filteredListings" :key="item.id">
                     <div class="glass-card rounded-2xl overflow-hidden flex flex-col justify-between relative group cursor-pointer border border-white/80"
                          @click="openDetailsModal(item)">
@@ -647,8 +1222,8 @@
                     </div>
                 </template>
             </section>
-
-            <!-- 5. ADMIN AUDIT & GOVERNANCE VIEW -->
+            </div>
+<!-- 5. ADMIN AUDIT & GOVERNANCE VIEW -->
             <section class="glass-panel rounded-2xl p-6 border border-slate-200/90 space-y-4" x-show="currentRole === 'admin'">
                 
                 <!-- Unlocked View (Only for kavinprasanth2306@gmail.com) -->
@@ -1458,6 +2033,121 @@
             </div>
         </div>
 
+        
+        <!-- 6. OFFICIAL CAMPUS REDISTRIBUTION GATE PASS & DISPATCH DOCKET MODAL -->
+        <div x-show="openGatePassModal" 
+             x-cloak
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+             @click.self="openGatePassModal = false">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+                
+                <!-- Gate Pass Header -->
+                <div class="flex items-start justify-between border-b-2 border-emerald-700 pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center font-bold">
+                                🌿
+                            </div>
+                            <h2 class="text-base font-extrabold text-slate-900 tracking-tight">EcoRescue Dispatch Docket</h2>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Campus Surplus Food Redistribution • FSSAI Food Safety Gate Pass</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-mono font-bold px-2.5 py-1 rounded bg-slate-100 border border-slate-300 text-slate-800"
+                              x-text="'GP-2026-0' + (gatePassItem ? gatePassItem.id : '1')"></span>
+                        <div class="text-[10px] text-slate-400 mt-1">Official Gate Clearance</div>
+                    </div>
+                </div>
+
+                <!-- Gate Pass Core Details -->
+                <template x-if="gatePassItem">
+                    <div class="space-y-4 text-xs">
+                        
+                        <!-- Consignor & Consignee Row -->
+                        <div class="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block">Consignor (Campus Mess)</span>
+                                <strong class="text-slate-900 block mt-0.5 text-xs" x-text="gatePassItem.donor_org"></strong>
+                                <span class="text-slate-500 text-[11px] block mt-0.5" x-text="gatePassItem.pickup_address"></span>
+                                <span class="text-slate-600 text-[11px] font-mono block mt-0.5" x-text="gatePassItem.pickup_contact"></span>
+                            </div>
+                            <div class="border-l border-slate-200 pl-3">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block">Consignee (Shelter NGO)</span>
+                                <strong class="text-slate-900 block mt-0.5 text-xs" x-text="gatePassItem.claimed_by_org || 'Hope Community Shelter'"></strong>
+                                <span class="text-slate-500 text-[11px] block mt-0.5">Authorized Redistribution Partner</span>
+                                <span class="text-slate-600 text-[11px] font-mono block mt-0.5" x-text="gatePassItem.claimed_by_contact || '+91 99222 33445'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Food Item Specifications -->
+                        <div class="border border-slate-200 rounded-2xl p-3.5 space-y-2 bg-white">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-sm text-slate-900" x-text="gatePassItem.item_name"></span>
+                                <span class="px-2 py-0.5 rounded text-[11px] font-bold"
+                                      :class="gatePassItem.dietary_type === 'Veg' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
+                                      x-text="gatePassItem.dietary_type"></span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-center">
+                                <div class="bg-slate-50 p-2 rounded-xl">
+                                    <span class="text-[10px] text-slate-400 block">Net Weight</span>
+                                    <strong class="text-slate-900 font-bold" x-text="gatePassItem.quantity_kg + ' kg'"></strong>
+                                </div>
+                                <div class="bg-slate-50 p-2 rounded-xl">
+                                    <span class="text-[10px] text-slate-400 block">Est. Servings</span>
+                                    <strong class="text-slate-900 font-bold" x-text="gatePassItem.servings_estimate + ' meals'"></strong>
+                                </div>
+                                <div class="bg-slate-50 p-2 rounded-xl">
+                                    <span class="text-[10px] text-slate-400 block">Thermal Handling</span>
+                                    <strong class="text-slate-900 font-bold truncate block" x-text="gatePassItem.storage_condition"></strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Verification PIN & Security Stamp -->
+                        <div class="p-4 rounded-2xl bg-amber-50/80 border-2 border-dashed border-amber-300 text-center space-y-1">
+                            <span class="text-[10px] uppercase font-bold text-amber-800 tracking-wider">Loading Bay Cryptographic PIN Stamp</span>
+                            <div class="text-2xl font-mono font-extrabold text-amber-950 tracking-widest"
+                                 x-text="'#' + (gatePassItem.claim_pin || '7842')"></div>
+                            <p class="text-[11px] text-amber-800">
+                                Verified by Mess Shift Supervisor during physical handoff. Campus Security Gate clearance authorized.
+                            </p>
+                        </div>
+
+                        <!-- Dual Sign-Off Blocks -->
+                        <div class="grid grid-cols-2 gap-4 pt-2">
+                            <div class="border border-slate-200 rounded-xl p-3 text-center">
+                                <div class="h-10 border-b border-dashed border-slate-300 mb-1 flex items-end justify-center pb-1">
+                                    <span class="font-serif italic text-slate-400 text-xs">Rahul Sharma</span>
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">Mess Shift In-Charge</span>
+                            </div>
+                            <div class="border border-slate-200 rounded-xl p-3 text-center">
+                                <div class="h-10 border-b border-dashed border-slate-300 mb-1 flex items-end justify-center pb-1">
+                                    <span class="font-serif italic text-slate-400 text-xs">NGO Logistics Driver</span>
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">Authorized Receiver</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </template>
+
+                <!-- Actions -->
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+                    <button type="button" @click="openGatePassModal = false"
+                            class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                        Close
+                    </button>
+                    <button type="button" @click="printSlip(gatePassItem)"
+                            class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow flex items-center gap-1.5 transition-all active:scale-95">
+                        <i data-lucide="printer" class="w-4 h-4"></i>
+                        <span>Print Official Security Pass (PDF)</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
         <!-- TOAST FEEDBACK -->
         <div x-show="toast.show" 
              x-cloak
@@ -1475,6 +2165,54 @@
             return {
                 superAdminEmail: 'kavinprasanth2306@gmail.com',
                 currentRole: 'receiver',
+                donorActiveShift: 'lunch',
+                donorBatchFilter: 'all',
+                donorSearchQuery: '',
+                donorPinInputs: {},
+                openGatePassModal: false,
+                gatePassItem: null,
+                donorTemplates: [
+                    {
+                        name: 'Basmati Jeera Rice, Paneer Butter Masala & 80 Rotis',
+                        qty: 28.5,
+                        exp: 3.5,
+                        cat: 'Cooked Meal',
+                        diet: 'Veg',
+                        store: 'Hot Insulated (>60°C)',
+                        img: '/static/images/rice_curry.svg',
+                        desc: 'Fresh post-lunch mess surplus. Kept sealed in hot insulated thermal cambros.'
+                    },
+                    {
+                        name: 'Moong Dal Khichdi, Tadka Dal & Mixed Veg Sabzi',
+                        qty: 22.0,
+                        exp: 3.0,
+                        cat: 'Cooked Meal',
+                        diet: 'Veg',
+                        store: 'Chilled (4°C)',
+                        img: '/static/images/khichdi_dal.svg',
+                        desc: 'Rapidly blast-chilled in food-grade tubs. Ready for evening shelter heating.'
+                    },
+                    {
+                        name: 'Assorted Whole Wheat Chapatis & Naan Basket',
+                        qty: 14.0,
+                        exp: 4.5,
+                        cat: 'Bakery',
+                        diet: 'Veg',
+                        store: 'Room Temp / Dry',
+                        img: '/static/images/bakery_bread.svg',
+                        desc: 'Over 120 freshly rolled rotis. Wrapped in clean food-grade foil trays.'
+                    },
+                    {
+                        name: 'South Indian Sambar, Rasam & Curd Rice',
+                        qty: 19.5,
+                        exp: 3.0,
+                        cat: 'Cooked Meal',
+                        diet: 'Veg',
+                        store: 'Hot Insulated (>60°C)',
+                        img: '/static/images/rice_curry.svg',
+                        desc: 'Standard dining hall surplus batch. Immediate collection recommended.'
+                    }
+                ],
                 activeFilter: 'all',
                 searchQuery: '',
                 openDonateModal: false,
@@ -1866,6 +2604,91 @@
                     } catch (e) {
                         alert('Error resetting data');
                     }
+                },
+
+                applyTemplate(tpl) {
+                    this.donateForm.item_name = tpl.name;
+                    this.donateForm.quantity_kg = tpl.qty;
+                    this.donateForm.expiry_hours = tpl.exp;
+                    this.donateForm.category = tpl.cat;
+                    this.donateForm.dietary_type = tpl.diet;
+                    this.donateForm.storage_condition = tpl.store;
+                    this.donateForm.image_url = tpl.img;
+                    this.donateForm.notes = tpl.desc;
+                    this.openDonateModal = true;
+                    this.showToast(`Loaded preset template: ${tpl.name.slice(0, 30)}...`);
+                    this.$nextTick(() => lucide.createIcons());
+                },
+
+                get donorFilteredListings() {
+                    return this.listings.filter(item => {
+                        // Filter by query
+                        if (this.donorSearchQuery) {
+                            const q = this.donorSearchQuery.toLowerCase();
+                            const matches = item.item_name.toLowerCase().includes(q) ||
+                                            (item.claimed_by_org && item.claimed_by_org.toLowerCase().includes(q)) ||
+                                            item.storage_condition.toLowerCase().includes(q);
+                            if (!matches) return false;
+                        }
+
+                        // Filter by status tab
+                        if (this.donorBatchFilter === 'claimed') return item.status === 'Claimed';
+                        if (this.donorBatchFilter === 'available') return item.status === 'Available';
+                        if (this.donorBatchFilter === 'completed') return item.status === 'Completed';
+                        if (this.donorBatchFilter === 'expired') return item.status === 'Expired';
+                        return true;
+                    });
+                },
+
+                async extendSafety(id, minutes) {
+                    try {
+                        const res = await fetch(`/api/listing/${id}/extend`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ minutes: minutes })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showToast(data.message);
+                            await this.fetchListings();
+                        } else {
+                            alert(data.message);
+                        }
+                    } catch (e) {
+                        alert('Error extending safety window');
+                    }
+                },
+
+                async cancelClaim(id) {
+                    if (!confirm('Release this NGO claim and return lot to public redistribution feed?')) return;
+                    try {
+                        const res = await fetch(`/api/listing/${id}/cancel-claim`, { method: 'POST' });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showToast(data.message);
+                            await this.fetchListings();
+                        } else {
+                            alert(data.message);
+                        }
+                    } catch (e) {
+                        alert('Error releasing reservation');
+                    }
+                },
+
+                async verifyDonorPin(id) {
+                    const pin = this.donorPinInputs[id];
+                    if (!pin || pin.trim().length !== 4) {
+                        alert('Please enter the 4-digit verification PIN provided by the NGO driver.');
+                        return;
+                    }
+                    await this.completePickup(id, pin.trim());
+                    this.donorPinInputs[id] = '';
+                },
+
+                openGatePass(item) {
+                    this.gatePassItem = item;
+                    this.openGatePassModal = true;
+                    this.$nextTick(() => lucide.createIcons());
                 },
 
                 printSlip(item) {

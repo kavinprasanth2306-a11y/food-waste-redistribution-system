@@ -280,6 +280,39 @@ class FoodRedistributionSystemTests(unittest.TestCase):
         res = self.client.post('/api/listings', data=payload)
         self.assertEqual(res.status_code, 400)
 
+    # ========================================================================
+    # 7. MESS DONOR OPERATIONS & DISPATCH
+    # ========================================================================
+
+    def test_tc_donor_01_extend_safety_window(self):
+        """TC-DONOR-01: Mess donor extends safe consumption window by +45 minutes under hot holding."""
+        res = self.client.post('/api/listing/1/extend', json={'minutes': 45})
+        self.assertEqual(res.status_code, 200)
+        data = res.get_json()
+        self.assertTrue(data['success'])
+        self.assertIn('+45 minutes', data['message'])
+
+    def test_tc_donor_02_cancel_claim_reservation(self):
+        """TC-DONOR-02: Mess donor releases NGO reservation if vehicle cannot arrive in time."""
+        # Listing #4 is seeded as Claimed
+        res = self.client.post('/api/listing/4/cancel-claim')
+        self.assertEqual(res.status_code, 200)
+        data = res.get_json()
+        self.assertTrue(data['success'])
+
+        # Verify listing #4 is now Available and PIN is voided
+        listings = self.client.get('/api/listings').get_json()['listings']
+        l4 = next(i for i in listings if i['id'] == 4)
+        self.assertEqual(l4['status'], 'Available')
+        self.assertIsNone(l4['claim_pin'])
+
+    def test_tc_donor_03_cancel_claim_invalid_status(self):
+        """TC-DONOR-03: Attempting to release an un-claimed listing returns HTTP 400."""
+        res = self.client.post('/api/listing/1/cancel-claim')
+        self.assertEqual(res.status_code, 400)
+        data = res.get_json()
+        self.assertFalse(data['success'])
+
 
 if __name__ == '__main__':
     unittest.main()
