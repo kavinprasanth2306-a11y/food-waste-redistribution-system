@@ -221,81 +221,98 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Server Data in JSON script block to avoid JS linter errors -->
+<script id="dashboard-data" type="application/json">
+{
+    "categoryLabels": {{ category_labels|tojson }},
+    "categoryData": {{ category_data|tojson }},
+    "statusCounts": [
+        {{ status_counts.Available }},
+        {{ status_counts.Claimed }},
+        {{ status_counts.Completed }},
+        {{ status_counts.Expired }}
+    ]
+}
+</script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const payload = JSON.parse(document.getElementById('dashboard-data').textContent);
+
         // Render Category Breakdown Doughnut Chart
-        const catCtx = document.getElementById('categoryChart').getContext('2d');
-        new Chart(catCtx, {
-            type: 'doughnut',
-            data: {
-                labels: {{ category_labels|tojson }},
-                datasets: [{
-                    data: {{ category_data|tojson }},
-                    backgroundColor: [
-                        '#10b981', // emerald
-                        '#f59e0b', // amber
-                        '#3b82f6', // blue
-                        '#a855f7', // purple
-                        '#06b6d4'  // cyan
-                    ],
-                    borderColor: '#0b0f19',
-                    borderWidth: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } }
-                    }
+        const catCanvas = document.getElementById('categoryChart');
+        if (catCanvas) {
+            const catCtx = catCanvas.getContext('2d');
+            new Chart(catCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: payload.categoryLabels,
+                    datasets: [{
+                        data: payload.categoryData,
+                        backgroundColor: [
+                            '#10b981', // emerald
+                            '#f59e0b', // amber
+                            '#3b82f6', // blue
+                            '#a855f7', // purple
+                            '#06b6d4'  // cyan
+                        ],
+                        borderColor: '#0b0f19',
+                        borderWidth: 3
+                    }]
                 },
-                cutout: '68%'
-            }
-        });
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } }
+                        }
+                    },
+                    cutout: '68%'
+                }
+            });
+        }
 
         // Render Status Bar Chart
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        new Chart(statusCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Available', 'Claimed', 'Completed', 'Expired'],
-                datasets: [{
-                    label: 'Listing Count',
-                    data: [
-                        {{ status_counts.Available }},
-                        {{ status_counts.Claimed }},
-                        {{ status_counts.Completed }},
-                        {{ status_counts.Expired }}
-                    ],
-                    backgroundColor: [
-                        'rgba(16, 185, 129, 0.8)',
-                        'rgba(245, 158, 11, 0.8)',
-                        'rgba(20, 184, 166, 0.8)',
-                        'rgba(244, 63, 94, 0.8)'
-                    ],
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans' } },
-                        grid: { display: false }
-                    },
-                    y: {
-                        ticks: { color: '#94a3b8', stepSize: 1 },
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
-                    }
+        const statusCanvas = document.getElementById('statusChart');
+        if (statusCanvas) {
+            const statusCtx = statusCanvas.getContext('2d');
+            new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Available', 'Claimed', 'Completed', 'Expired'],
+                    datasets: [{
+                        label: 'Listing Count',
+                        data: payload.statusCounts,
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(20, 184, 166, 0.8)',
+                            'rgba(244, 63, 94, 0.8)'
+                        ],
+                        borderRadius: 6
+                    }]
                 },
-                plugins: {
-                    legend: { display: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans' } },
+                            grid: { display: false }
+                        },
+                        y: {
+                            ticks: { color: '#94a3b8', stepSize: 1 },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
                 }
-            }
-        });
+            });
+        }
     });
 </script>
 {% endblock %}
