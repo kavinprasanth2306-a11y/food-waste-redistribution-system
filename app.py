@@ -425,8 +425,11 @@ def api_google_sync():
     photo_url = data.get('photoURL', '')
     role = data.get('role', 'receiver')
 
-    if not email:
-        return jsonify({'success': False, 'message': 'Valid Google email is required.'}), 400
+    is_super_admin = (email.strip().lower() == SUPER_ADMIN_EMAIL.lower())
+    if is_super_admin:
+        role = 'admin'
+    elif role == 'admin':
+        role = 'receiver'
 
     conn = get_db()
     cursor = conn.cursor()
@@ -434,22 +437,38 @@ def api_google_sync():
     user = cursor.fetchone()
 
     if user:
-        cursor.execute("UPDATE users SET photo_url = ?, name = ? WHERE email = ?", (photo_url, name, email))
+        if is_super_admin:
+            assigned_role = 'admin'
+            org = user['organization'] or 'University Food Safety & Redistribution Board'
+            cursor.execute("UPDATE users SET role = 'admin', photo_url = ?, name = ? WHERE email = ?", (photo_url, name, email))
+        else:
+            assigned_role = user['role']
+            if assigned_role == 'admin':
+                assigned_role = 'receiver'
+                cursor.execute("UPDATE users SET role = 'receiver' WHERE email = ?", (email,))
+            cursor.execute("UPDATE users SET photo_url = ?, name = ? WHERE email = ?", (photo_url, name, email))
+            org = user['organization'] or ('Campus Dining Complex' if assigned_role == 'donor' else 'Hope Community Shelter')
+        
         user_id = user['id']
-        assigned_role = user['role']
-        org = user['organization'] or ('Campus Dining Complex' if assigned_role == 'donor' else 'Hope Community Shelter')
         phone = user['phone'] or '+91 98765 00000'
         address = user['address'] or 'Campus Dining Dock 1'
     else:
-        org = "Campus Dining Complex" if role == 'donor' else "Hope Community Shelter"
-        phone = "+91 98765 43210"
-        address = "Campus Dining Loading Dock Gate 2"
+        if is_super_admin:
+            assigned_role = 'admin'
+            org = "University Food Safety & Redistribution Board"
+            phone = "+91 99222 33445"
+            address = "Faculty IT Complex, Admin Block"
+        else:
+            assigned_role = 'donor' if role == 'donor' else 'receiver'
+            org = "Campus Dining Complex" if assigned_role == 'donor' else "Hope Community Shelter"
+            phone = "+91 98765 43210"
+            address = "Campus Dining Loading Dock Gate 2"
+
         cursor.execute('''
             INSERT INTO users (name, email, role, organization, phone, address, photo_url, is_verified)
             VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-        ''', (name, email, role, org, phone, address, photo_url))
+        ''', (name, email, assigned_role, org, phone, address, photo_url))
         user_id = cursor.lastrowid
-        assigned_role = role
 
     conn.commit()
     conn.close()
@@ -482,6 +501,13 @@ def api_update_profile():
 
     if not email:
         return jsonify({'success': False, 'message': 'Email is required.'}), 400
+
+    is_super_admin = (email.strip().lower() == SUPER_ADMIN_EMAIL.lower())
+    if role == 'admin' and not is_super_admin:
+        return jsonify({
+            'success': False,
+            'message': f'Access Denied: Admin Audit access is strictly restricted to platform administrator ({SUPER_ADMIN_EMAIL}).'
+        }), 403
 
     conn = get_db()
     cursor = conn.cursor()
