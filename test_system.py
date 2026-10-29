@@ -92,6 +92,15 @@ class FoodRedistributionSystemTests(unittest.TestCase):
         self.assertTrue(data['success'])
         self.assertEqual(data['user']['email'], 'mentor_evaluator@example.com')
 
+    def test_tc_pos_05_export_audit_csv(self):
+        """TC-POS-05: Export food redistribution logs to Excel/CSV audit format."""
+        res = self.client.get('/api/export/csv')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.mimetype, 'text/csv')
+        self.assertIn('Listing ID', res.data.decode('utf-8'))
+        self.assertIn('Food Item Name', res.data.decode('utf-8'))
+        self.assertIn('FSSAI Food Safety Compliance', res.data.decode('utf-8'))
+
     # ========================================================================
     # 2. NEGATIVE TESTING
     # ========================================================================

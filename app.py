@@ -9,9 +9,11 @@ import os
 import random
 import sqlite3
 import time
+import csv
+import io
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, Response
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ia3-light-glassmorphic-eco-rescue-2026'
@@ -270,6 +272,37 @@ def format_listing_row(row):
     # Impact metrics: 1 kg = 2.5 kg CO2e
     d['co2_saved_kg'] = round(d['quantity_kg'] * 2.5, 2)
     d['water_saved_liters'] = int(d['quantity_kg'] * 1000)
+
+    # Campus Geolocation mapping for interactive map
+    CAMPUS_COORDS = {
+        'Hostel Dining Complex Gate 1': (10.9372, 76.7425),
+        'Campus Central Mess (Hostel A)': (10.9365, 76.7438),
+        'PG Ladies Hostel Dining Block': (10.9351, 76.7455),
+        'North Campus Cafeteria (Block C)': (10.9380, 76.7460),
+        'Bakery & Confectionery Unit (Gate 3)': (10.9345, 76.7430),
+        'Guest House Banquet Kitchen': (10.9390, 76.7410)
+    }
+
+    addr = d.get('pickup_address', '')
+    coords = None
+    for key, c in CAMPUS_COORDS.items():
+        if key.lower() in addr.lower() or addr.lower() in key.lower():
+            coords = c
+            break
+    if not coords:
+        lid = d.get('id', 1)
+        coords = (10.9360 + (lid % 7) * 0.0012, 76.7435 + ((lid * 3) % 7) * 0.0014)
+
+    d['latitude'] = coords[0]
+    d['longitude'] = coords[1]
+
+    # Calculate distance from shelter station (10.9320, 76.7480)
+    dlat = (coords[0] - 10.9320) * 111.0
+    dlng = (coords[1] - 76.7480) * 109.0
+    dist = round(max(0.4, (dlat**2 + dlng**2)**0.5), 1)
+    d['distance_km'] = dist
+    d['drive_time_mins'] = max(3, int(dist * 3.5))
+
     return d
 
 
@@ -679,6 +712,64 @@ def api_cancel_claim(id):
         'success': True,
         'message': "Reservation released! Food lot returned to live public redistribution feed."
     })
+
+
+@app.route('/api/export/csv', methods=['GET'])
+def api_export_csv():
+    """Export food redistribution and environmental audit logs to CSV."""
+    status_filter = request.args.get('status', 'all')
+    conn = get_db()
+    cursor = conn.cursor()
+
+    if status_filter == 'all':
+        cursor.execute("SELECT * FROM food_listings ORDER BY id DESC")
+    else:
+        cursor.execute("SELECT * FROM food_listings WHERE status = ? ORDER BY id DESC", (status_filter,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    output = io.StringIO()
+    # UTF-8 BOM for Microsoft Excel rendering
+    output.write('\ufeff')
+    writer = csv.writer(output)
+
+    writer.writerow([
+        'Listing ID', 'Food Item Name', 'Donor Organization', 'Category',
+        'Dietary Type', 'Quantity (kg)', 'Estimated Servings', 'Storage Condition',
+        'Prepared At', 'Expires At', 'Status', 'Claimed By Shelter / NGO',
+        'Verification PIN', 'Pickup Address', 'Pickup Contact',
+        'CO2e Mitigated (kg)', 'Equivalent Meals Rescued', 'FSSAI Food Safety Compliance'
+    ])
+
+    for r in rows:
+        d = format_listing_row(r)
+        qty = float(d.get('quantity_kg', 0))
+        is_completed = (d.get('status') == 'Completed')
+        co2 = round(qty * 2.50, 2) if is_completed else 0.0
+        meals = int(qty / 0.40) if is_completed else 0
+        
+        compliance = 'COMPLIANT / RESCUED' if is_completed else (
+            'ACTIVE / MONITORED' if d.get('status') == 'Available' else (
+                'CLAIMED / IN-TRANSIT' if d.get('status') == 'Claimed' else 'EXPIRED'
+            )
+        )
+
+        writer.writerow([
+            d.get('id'), d.get('item_name'), d.get('donor_org'), d.get('category'),
+            d.get('dietary_type'), d.get('quantity_kg'), d.get('servings_estimate'),
+            d.get('storage_condition'), d.get('prepared_at'), d.get('expires_at'),
+            d.get('status'), d.get('claimed_by_org') or 'Unclaimed',
+            d.get('claim_pin') or 'N/A', d.get('pickup_address'),
+            d.get('pickup_contact'), co2, meals, compliance
+        ])
+
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv; charset=utf-8',
+        headers={'Content-Disposition': 'attachment; filename=campus_food_rescue_audit.csv'}
+    )
 
 
 @app.route('/api/delete/<int:id>', methods=['POST'])
