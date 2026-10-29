@@ -169,7 +169,7 @@ def seed_data(conn):
             28.5, 60, "Hot Insulated (>60°C)", r1_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r1_exp.strftime("%Y-%m-%d %H:%M:%S"), "Campus Dining Complex, Loading Dock A",
             "+91 98765 43210 (Mess Supervisor)", "Surplus from lunch rush. Packed in 3 insulated thermal cafs.",
-            "/static/images/image.png",
+            "/static/images/rice_paneer.jpg",
             "Available", None, None, None, None, None
         ),
         (
@@ -178,7 +178,7 @@ def seed_data(conn):
             14.0, 40, "Room Temp / Dry", r2_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r2_exp.strftime("%Y-%m-%d %H:%M:%S"), "Grand Royal Kitchen Bay, Sector 18",
             "+91 98111 22334 (Head Pastry Chef)", "Individually wrapped and tray-sealed. Safe for evening snack distribution.",
-            "/static/images/bakery_bread.svg",
+            "/static/images/bakery_breads.jpg",
             "Available", None, None, None, None, None
         ),
         (
@@ -187,7 +187,7 @@ def seed_data(conn):
             35.0, 75, "Hot Insulated (>60°C)", r3_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r3_exp.strftime("%Y-%m-%d %H:%M:%S"), "Grand Royal Banquet Main Entrance, Sector 18",
             "+91 98111 22334 (Banquet Operations Lead)", "Corporate convention lunch excess. Strictly kept above 65°C in chafing dishes.",
-            "/static/images/image.png",
+            "/static/images/chicken_biryani.jpg",
             "Available", None, None, None, None, None
         ),
         (
@@ -196,7 +196,7 @@ def seed_data(conn):
             22.0, 50, "Chilled (4°C)", r4_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r4_exp.strftime("%Y-%m-%d %H:%M:%S"), "Campus Dining Complex, Block B Cold Room",
             "+91 98765 43210 (Mr. Rahul)", "Rapidly chilled in clean food-safe bins. Van dispatched.",
-            "/static/images/khichdi_dal.svg",
+            "/static/images/khichdi_dal.jpg",
             "Claimed", "7842", "Hope Community Shelter & Food Bank", "+91 99222 33445",
             r4_claimed.strftime("%Y-%m-%d %H:%M:%S"), None
         ),
@@ -206,7 +206,7 @@ def seed_data(conn):
             10.0, 20, "Chilled (4°C)", r5_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r5_exp.strftime("%Y-%m-%d %H:%M:%S"), "Grand Royal Banquet Kitchen Gate",
             "+91 98111 22334", "Exceeded safety consumption threshold. Automated safety lockout active.",
-            "/static/images/mushroom_soup.svg",
+            "/static/images/mushroom_soup.jpg",
             "Expired", None, None, None, None, None
         )
     ]
