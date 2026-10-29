@@ -169,7 +169,7 @@ def seed_data(conn):
             28.5, 60, "Hot Insulated (>60°C)", r1_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r1_exp.strftime("%Y-%m-%d %H:%M:%S"), "Campus Dining Complex, Loading Dock A",
             "+91 98765 43210 (Mess Supervisor)", "Surplus from lunch rush. Packed in 3 insulated thermal cafs.",
-            "/static/images/rice_curry.svg",
+            "/static/images/image.png",
             "Available", None, None, None, None, None
         ),
         (
@@ -187,7 +187,7 @@ def seed_data(conn):
             35.0, 75, "Hot Insulated (>60°C)", r3_prep.strftime("%Y-%m-%d %H:%M:%S"),
             r3_exp.strftime("%Y-%m-%d %H:%M:%S"), "Grand Royal Banquet Main Entrance, Sector 18",
             "+91 98111 22334 (Banquet Operations Lead)", "Corporate convention lunch excess. Strictly kept above 65°C in chafing dishes.",
-            "/static/images/chicken_biryani.svg",
+            "/static/images/image.png",
             "Available", None, None, None, None, None
         ),
         (
@@ -803,6 +803,12 @@ def api_reset_demo():
 init_db()
 
 if __name__ == '__main__':
+    try:
+        import sys
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
     print("\n" + "="*70)
     print("🌿 Smart Food Waste Management & Redistribution Platform (IA3)")
     print("⚡ Design System: Ultra-Clean Light Glassmorphism")

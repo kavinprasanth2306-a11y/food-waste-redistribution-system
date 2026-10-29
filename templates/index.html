@@ -1151,10 +1151,51 @@
                         In-Transit
                     </button>
                 </div>
+
+                <!-- View Mode Switcher: Grid vs Campus Map -->
+                <div class="flex items-center p-1 bg-slate-100/90 rounded-xl border border-slate-200/80 shrink-0 self-end md:self-auto">
+                    <button type="button" @click="setViewMode('grid')"
+                            :class="viewMode === 'grid' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800'"
+                            class="px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-all">
+                        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                        <span>Grid</span>
+                    </button>
+                    <button type="button" @click="setViewMode('map')"
+                            :class="viewMode === 'map' ? 'bg-emerald-600 text-white shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800'"
+                            class="px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-all">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                        <span>Campus Map</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE CAMPUS RESCUE MAP VIEW -->
+            <div x-show="viewMode === 'map'" x-cloak class="glass-panel rounded-2xl p-4 border border-slate-200/80 space-y-3">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                        <h3 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Campus Spatial Rescue Telemetry Map</h3>
+                        <span class="text-[11px] text-slate-500 hidden sm:inline">• Live OpenStreetMap Radar</span>
+                    </div>
+                    <!-- Legend -->
+                    <div class="flex items-center gap-3 text-[11px] font-medium text-slate-600 flex-wrap">
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Urgent (&lt;2h)</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Expiring (2-5h)</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Safe (&gt;5h)</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> Shelter Base</span>
+                    </div>
+                </div>
+                <div id="rescueMap" class="w-full h-[480px] rounded-xl border border-slate-200 shadow-inner z-10 bg-slate-50"></div>
+                <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                    <span>💡 Click any marker to view food lot details, remaining safe window, and 1-click rescue actions.</span>
+                    <button type="button" @click="setViewMode('grid')" class="text-emerald-700 font-bold hover:underline">
+                        Switch to Card Grid →
+                    </button>
+                </div>
             </div>
 
             <!-- 4. TACTILE CARD GRID (WITH PROMINENT IMAGE FIRST & CLICK TO VIEW DETAILS) -->
-            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <section x-show="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <template x-for="item in filteredListings" :key="item.id">
                     <div class="glass-card rounded-2xl overflow-hidden flex flex-col justify-between relative group cursor-pointer border border-white/80"
                          @click="openDetailsModal(item)">
@@ -1221,10 +1262,17 @@
                                 <h3 class="text-base font-bold text-slate-900 tracking-tight group-hover:text-emerald-700 transition-colors line-clamp-1"
                                     x-text="item.item_name"></h3>
                                 
-                                <p class="text-xs text-slate-500 mt-1 flex items-center gap-1 truncate">
-                                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-                                    <span x-text="item.donor_org"></span>
-                                </p>
+                                <div class="text-xs text-slate-500 mt-1 flex items-center justify-between gap-1">
+                                    <span class="flex items-center gap-1 truncate">
+                                        <i data-lucide="building-2" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                                        <span x-text="item.donor_org" class="truncate"></span>
+                                    </span>
+                                    <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 shrink-0 flex items-center gap-1"
+                                          x-show="item.distance_km">
+                                        <i data-lucide="navigation" class="w-3 h-3 text-blue-600"></i>
+                                        <span x-text="item.distance_km + ' km • ' + (item.drive_time_mins || 6) + 'm drive'"></span>
+                                    </span>
+                                </div>
 
                                 <div class="flex items-center gap-2 mt-3 text-[11px] text-slate-600">
                                     <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200" x-text="item.storage_condition"></span>
@@ -1238,12 +1286,19 @@
                             <template x-if="item.status === 'Available'">
                                 <div class="flex gap-2">
                                     <button type="button" @click="openDetailsModal(item)"
-                                            class="w-1/3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors flex items-center justify-center gap-1">
+                                            class="w-1/4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors flex items-center justify-center gap-1"
+                                            title="View Details">
                                         <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                                         <span>Details</span>
                                     </button>
+                                    <button type="button" @click.stop="shareWhatsApp(item)"
+                                            class="py-2 px-2.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold text-xs transition-colors flex items-center justify-center gap-1"
+                                            title="Broadcast to Volunteer WhatsApp Driver Network">
+                                        <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                                        <span class="hidden sm:inline">Alert</span>
+                                    </button>
                                     <button type="button" @click="openClaim(item)"
-                                            class="w-2/3 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-1 active:scale-95">
+                                            class="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-1 active:scale-95">
                                         <i data-lucide="hand-heart" class="w-3.5 h-3.5"></i>
                                         <span>Claim Food</span>
                                     </button>
@@ -1288,7 +1343,7 @@
                 <!-- Unlocked View (Only for kavinprasanth2306@gmail.com) -->
                 <template x-if="isAdminUser">
                     <div class="space-y-4">
-                        <div class="flex items-center justify-between pb-3 border-b border-slate-200/70">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-200/70 flex-wrap gap-2">
                             <div>
                                 <h2 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                                     <i data-lucide="shield" class="w-5 h-5 text-blue-600"></i>
@@ -1297,10 +1352,17 @@
                                 </h2>
                                 <p class="text-xs text-slate-500 mt-0.5">Real-time listing trace, verification, and audit controls for kavinprasanth2306@gmail.com.</p>
                             </div>
-                            <button type="button" @click="resetToSampleData()" 
-                                    class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors">
-                                Restore Pristine Demo Data
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <a href="/api/export/csv" 
+                                   class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 flex items-center gap-1.5 transition-colors shadow-xs">
+                                    <i data-lucide="sheet" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                    <span>Download Official Audit (.CSV)</span>
+                                </a>
+                                <button type="button" @click="resetToSampleData()" 
+                                        class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors">
+                                    Restore Pristine Demo Data
+                                </button>
+                            </div>
                         </div>
 
                         <div class="overflow-x-auto">
@@ -2098,7 +2160,7 @@
              x-cloak
              class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
              @click.self="openGatePassModal = false">
-            <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+            <div id="printableGatePass" class="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
                 
                 <!-- Gate Pass Header -->
                 <div class="flex items-start justify-between border-b-2 border-emerald-700 pb-4">
@@ -2162,14 +2224,20 @@
                             </div>
                         </div>
 
-                        <!-- Verification PIN & Security Stamp -->
-                        <div class="p-4 rounded-2xl bg-amber-50/80 border-2 border-dashed border-amber-300 text-center space-y-1">
-                            <span class="text-[10px] uppercase font-bold text-amber-800 tracking-wider">Loading Bay Cryptographic PIN Stamp</span>
-                            <div class="text-2xl font-mono font-extrabold text-amber-950 tracking-widest"
-                                 x-text="'#' + (gatePassItem.claim_pin || '7842')"></div>
-                            <p class="text-[11px] text-amber-800">
-                                Verified by Mess Shift Supervisor during physical handoff. Campus Security Gate clearance authorized.
-                            </p>
+                        <!-- Verification PIN & Security Stamp with Dynamic QR -->
+                        <div class="p-4 rounded-2xl bg-amber-50/80 border-2 border-dashed border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="text-left space-y-1">
+                                <span class="text-[10px] uppercase font-bold text-amber-800 tracking-wider">Loading Bay Security PIN & FSSAI Stamp</span>
+                                <div class="text-2xl font-mono font-extrabold text-amber-950 tracking-widest"
+                                     x-text="'#' + (gatePassItem.claim_pin || '7842')"></div>
+                                <p class="text-[11px] text-amber-800 max-w-xs">
+                                    Verified by Mess Shift In-Charge at physical handoff. Scan QR or present 4-digit PIN for Campus Security Gate Clearance.
+                                </p>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-xl border border-amber-200 shadow-xs shrink-0 flex flex-col items-center">
+                                <div id="gatePassQrCode" class="w-[90px] h-[90px] flex items-center justify-center"></div>
+                                <span class="text-[9px] font-mono font-bold text-slate-500 uppercase mt-1">Gate Pass QR</span>
+                            </div>
                         </div>
 
                         <!-- Dual Sign-Off Blocks -->
@@ -2192,16 +2260,24 @@
                 </template>
 
                 <!-- Actions -->
-                <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-between gap-2 flex-wrap no-print">
                     <button type="button" @click="openGatePassModal = false"
                             class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">
                         Close
                     </button>
-                    <button type="button" @click="printSlip(gatePassItem)"
-                            class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow flex items-center gap-1.5 transition-all active:scale-95">
-                        <i data-lucide="printer" class="w-4 h-4"></i>
-                        <span>Print Official Security Pass (PDF)</span>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="shareWhatsApp(gatePassItem)"
+                                class="px-3.5 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold text-xs flex items-center gap-1.5 transition-colors"
+                                title="Send Gate Pass link to Volunteer Driver on WhatsApp">
+                            <i data-lucide="share-2" class="w-4 h-4 text-emerald-600"></i>
+                            <span>WhatsApp Pass</span>
+                        </button>
+                        <button type="button" @click="window.print()"
+                                class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow flex items-center gap-1.5 transition-all active:scale-95">
+                            <i data-lucide="printer" class="w-4 h-4"></i>
+                            <span>Print Security Pass (PDF)</span>
+                        </button>
+                    </div>
                 </div>
 
             </div>
@@ -2224,6 +2300,9 @@
             return {
                 superAdminEmail: 'kavinprasanth2306@gmail.com',
                 currentRole: 'receiver',
+                viewMode: 'grid',
+                rescueMap: null,
+                markersGroup: null,
                 donorActiveShift: 'lunch',
                 donorBatchFilter: 'all',
                 donorSearchQuery: '',
@@ -2296,10 +2375,10 @@
                     address: ''
                 },
                 metrics: {
-                    total_kg_saved: {{ metrics.total_kg_saved }},
-                    total_meals_saved: {{ metrics.total_meals_saved }},
-                    total_co2_avoided_kg: {{ metrics.total_co2_avoided_kg }},
-                    active_count: {{ metrics.active_count }}
+                    total_kg_saved: Number("{{ metrics.total_kg_saved }}"),
+                    total_meals_saved: Number("{{ metrics.total_meals_saved }}"),
+                    total_co2_avoided_kg: Number("{{ metrics.total_co2_avoided_kg }}"),
+                    active_count: Number("{{ metrics.active_count }}")
                 },
                 listings: [],
                 donateForm: {
@@ -2329,6 +2408,7 @@
 
                 initApp() {
                     window.activeRole = this.currentRole;
+                    window.foodAppInstance = this;
                     window.addEventListener('open-auth-help-modal', () => {
                         this.openAuthHelpModal = true;
                         this.$nextTick(() => lucide.createIcons());
@@ -2514,7 +2594,12 @@
                         const data = await res.json();
                         if (data.success) {
                             this.listings = data.listings;
-                            this.$nextTick(() => lucide.createIcons());
+                            this.$nextTick(() => {
+                                lucide.createIcons();
+                                if (this.viewMode === 'map') {
+                                    this.updateMapMarkers();
+                                }
+                            });
                         }
                         const mRes = await fetch('/api/metrics');
                         const mData = await mRes.json();
@@ -2607,6 +2692,9 @@
                         });
                         const data = await res.json();
                         if (data.success) {
+                            if (window.confetti) {
+                                confetti({ particleCount: 110, spread: 70, origin: { y: 0.6 } });
+                            }
                             this.showToast(data.message);
                             this.openClaimModal = false;
                             await this.fetchListings();
@@ -2627,6 +2715,9 @@
                         });
                         const data = await res.json();
                         if (data.success) {
+                            if (window.confetti) {
+                                confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
+                            }
                             this.showToast(data.message);
                             await this.fetchListings();
                         } else {
@@ -2747,7 +2838,204 @@
                 openGatePass(item) {
                     this.gatePassItem = item;
                     this.openGatePassModal = true;
-                    this.$nextTick(() => lucide.createIcons());
+                    this.$nextTick(() => {
+                        lucide.createIcons();
+                        const qrPayload = JSON.stringify({
+                            id: item.id,
+                            food: item.item_name,
+                            qty: item.quantity_kg,
+                            donor: item.donor_org,
+                            pin: item.claim_pin,
+                            fssai: 'TN-2026-908',
+                            exp: item.expires_at
+                        });
+                        this.renderQr('gatePassQrCode', qrPayload);
+                    });
+                },
+
+                renderQr(elementId, text) {
+                    const el = document.getElementById(elementId);
+                    if (!el) return;
+                    el.innerHTML = '';
+                    if (window.QRCode) {
+                        new QRCode(el, {
+                            text: text,
+                            width: 88,
+                            height: 88,
+                            colorDark: '#0f172a',
+                            colorLight: '#ffffff',
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+                    }
+                },
+
+                shareWhatsApp(item) {
+                    if (!item) return;
+                    const text = `🚨 *FOOD RESCUE ALERT - Campus Surplus Lot #${item.id}*
+🍱 *Item:* ${item.item_name}
+⚖️ *Quantity:* ${item.quantity_kg} kg (~${item.servings_estimate} meals)
+📍 *Pickup Bay:* ${item.pickup_address} (${item.donor_org})
+⏳ *Safety Window:* Must collect before ${item.expires_at} (${item.drive_time_mins || 6} mins driving distance)
+🔑 *Security PIN:* #${item.claim_pin || 'Pending Claim'}
+📞 *Contact Coordinator:* ${item.pickup_contact || '+91 98450 12345'}
+
+_Generated by Smart Campus Redistribution Portal_`;
+                    const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                    window.open(waUrl, '_blank');
+                },
+
+                shareWhatsAppById(id) {
+                    const item = this.listings.find(i => i.id === id);
+                    if (item) this.shareWhatsApp(item);
+                },
+
+                openClaimById(id) {
+                    const item = this.listings.find(i => i.id === id);
+                    if (item) this.openClaim(item);
+                },
+
+                openDetailsById(id) {
+                    const item = this.listings.find(i => i.id === id);
+                    if (item) this.openDetailsModal(item);
+                },
+
+                setViewMode(mode) {
+                    this.viewMode = mode;
+                    if (mode === 'map') {
+                        this.$nextTick(() => {
+                            this.initOrUpdateMap();
+                        });
+                    }
+                },
+
+                initOrUpdateMap() {
+                    if (!window.L) return;
+                    const mapContainer = document.getElementById('rescueMap');
+                    if (!mapContainer) return;
+
+                    if (!this.rescueMap) {
+                        // University / Campus Base Coordinates: 10.9360, 76.7440
+                        this.rescueMap = L.map('rescueMap', {
+                            zoomControl: true,
+                            scrollWheelZoom: true
+                        }).setView([10.9355, 76.7445], 16);
+
+                        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                            maxZoom: 19
+                        }).addTo(this.rescueMap);
+
+                        // Shelter Base Station Pin (Receiver Location)
+                        const shelterIcon = L.divIcon({
+                            className: 'custom-leaflet-pin',
+                            html: `<div style="background:#2563eb; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px rgba(37,99,235,0.4); border:2px solid #ffffff; font-size:16px;">🏠</div>`,
+                            iconSize: [34, 34],
+                            iconAnchor: [17, 17]
+                        });
+                        L.marker([10.9320, 76.7480], { icon: shelterIcon })
+                            .addTo(this.rescueMap)
+                            .bindPopup(`
+                                <div style="font-family:sans-serif; padding:4px;">
+                                    <div style="font-size:10px; font-weight:800; color:#2563eb; text-transform:uppercase;">Relief Base Station</div>
+                                    <div style="font-size:13px; font-weight:700; color:#0f172a;">Hope Community Shelter Hub</div>
+                                    <div style="font-size:11px; color:#64748b; margin-top:2px;">Dispatched collection van staging bay</div>
+                                </div>
+                            `);
+
+                        this.markersGroup = L.layerGroup().addTo(this.rescueMap);
+                    } else {
+                        setTimeout(() => {
+                            this.rescueMap.invalidateSize();
+                        }, 200);
+                    }
+
+                    this.updateMapMarkers();
+                },
+
+                updateMapMarkers() {
+                    if (!this.rescueMap || !this.markersGroup || !window.L) return;
+                    this.markersGroup.clearLayers();
+
+                    const items = this.filteredListings;
+                    items.forEach(item => {
+                        if (!item.latitude || !item.longitude) return;
+
+                        let pinColor = '#10b981'; // safe emerald
+                        let badgeBg = '#ecfdf5';
+                        let badgeText = '#065f46';
+                        let pulseClass = '';
+
+                        if (item.urgency_level === 'critical') {
+                            pinColor = '#ef4444'; // critical red
+                            badgeBg = '#fef2f2';
+                            badgeText = '#991b1b';
+                            pulseClass = 'animate-ping';
+                        } else if (item.urgency_level === 'warning') {
+                            pinColor = '#f59e0b'; // amber
+                            badgeBg = '#fffbeb';
+                            badgeText = '#92400e';
+                        }
+
+                        const pinHtml = `
+                            <div style="position:relative; width:36px; height:36px;">
+                                ${item.urgency_level === 'critical' ? `<span style="position:absolute; inset:0; border-radius:50%; background:#ef4444; opacity:0.4; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>` : ''}
+                                <div style="background:${pinColor}; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 18px rgba(0,0,0,0.18); border:2.5px solid #ffffff; font-size:15px; font-weight:bold; position:relative; z-index:2;">
+                                    ${item.dietary_type === 'Veg' ? '🌱' : '🍗'}
+                                </div>
+                            </div>
+                        `;
+
+                        const customIcon = L.divIcon({
+                            className: 'custom-leaflet-pin',
+                            html: pinHtml,
+                            iconSize: [36, 36],
+                            iconAnchor: [18, 18]
+                        });
+
+                        const popupHtml = `
+                            <div style="font-family: 'Inter', -apple-system, sans-serif; min-width: 210px; max-width: 250px; padding: 4px;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 6px;">
+                                    <span style="font-size:10px; font-weight:800; background:${badgeBg}; color:${badgeText}; padding:2px 6px; border-radius:6px; text-transform:uppercase;">
+                                        ${item.status} &bull; ${item.urgency_level}
+                                    </span>
+                                    <span style="font-size:11px; font-weight:700; color:#2563eb;">
+                                        🚗 ${item.drive_time_mins || 5} min
+                                    </span>
+                                </div>
+                                <div style="font-size:13px; font-weight:800; color:#0f172a; line-height:1.3; margin-bottom:4px;">
+                                    ${item.item_name}
+                                </div>
+                                <div style="font-size:11px; color:#475569; margin-bottom: 4px;">
+                                    🏢 ${item.donor_org}
+                                </div>
+                                <div style="display:flex; justify-content:space-between; font-size:11px; color:#64748b; background:#f8fafc; padding:6px 8px; border-radius:8px; margin-bottom:8px; border:1px solid #e2e8f0;">
+                                    <span><strong>${item.quantity_kg} kg</strong> (${item.servings_estimate} meals)</span>
+                                    <span style="color:#dc2626; font-weight:700;">⏱️ ${item.expires_at}</span>
+                                </div>
+                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                                    <button onclick="window.foodAppInstance && window.foodAppInstance.shareWhatsAppById(${item.id})"
+                                            style="padding:6px; font-size:11px; font-weight:700; background:#22c55e; color:white; border:none; border-radius:6px; cursor:pointer;">
+                                        WhatsApp
+                                    </button>
+                                    ${item.status === 'Available' ? `
+                                        <button onclick="window.foodAppInstance && window.foodAppInstance.openClaimById(${item.id})"
+                                                style="padding:6px; font-size:11px; font-weight:700; background:#0f172a; color:white; border:none; border-radius:6px; cursor:pointer;">
+                                            Claim Lot
+                                        </button>
+                                    ` : `
+                                        <button onclick="window.foodAppInstance && window.foodAppInstance.openDetailsById(${item.id})"
+                                                style="padding:6px; font-size:11px; font-weight:700; background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer;">
+                                            Details
+                                        </button>
+                                    `}
+                                </div>
+                            </div>
+                        `;
+
+                        const marker = L.marker([item.latitude, item.longitude], { icon: customIcon })
+                            .bindPopup(popupHtml, { className: 'glassmorphic-popup' });
+                        this.markersGroup.addLayer(marker);
+                    });
                 },
 
                 printSlip(item) {
